@@ -20,16 +20,41 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_26.3.0.app
 
       - name: Compile Feather
-        run: | 
+        run: |
           agvtool new-version -all $(git rev-parse HEAD)
           make
           mkdir upload
           mv packages/* upload/
 
+      # Upload the built files so the release job doesn't need to
+      # rebuild from scratch if anything below fails.
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: feather-build
+          path: upload/
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: feather-build
+          path: upload
+
       - name: Extract Version
         id: get_version
         run: |
-          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" _build/Payload/*.app/Info.plist)
+          # Read the version straight from the packaged IPA itself
+          # (always uses the correct iOS-style Info.plist layout,
+          # regardless of what the last local build folder looked like).
+          unzip -p upload/Feather.ipa 'Payload/*.app/Info.plist' > /tmp/Info.plist
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" /tmp/Info.plist)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Create Release
@@ -43,4 +68,4 @@ jobs:
           fail_on_unmatched_files: true
           draft: true
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
