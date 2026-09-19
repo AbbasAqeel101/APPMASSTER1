@@ -148,6 +148,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		_ application: UIApplication,
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
 	) -> Bool {
+		Bundle.applyStoredLanguageOverrideIfNeeded()
 		_createPipeline()
 		_createDocumentsDirectories()
 		ResetView.clearWorkCache()
