@@ -10,6 +10,8 @@ import NimbleViews
 
 enum TabEnum: String, CaseIterable, Hashable {
 	case home
+	case apps
+	case games
 	case library
 	case sources
 	case settings
@@ -19,7 +21,9 @@ enum TabEnum: String, CaseIterable, Hashable {
 		switch self {
 		case .home:				return .localized("Home")
 		case .sources:     	return .localized("Sources")
-		case .library: 		return .localized("Apps")
+		case .apps:			return .localized("Apps")
+		case .games:		return .localized("Games")
+		case .library: 		return .localized("Library")
 		case .settings: 	return .localized("Settings")
 		case .certificates:	return .localized("Certificates")
 		}
@@ -29,6 +33,8 @@ enum TabEnum: String, CaseIterable, Hashable {
 		switch self {
 		case .home:			return "house.fill"
 		case .sources: 		return "globe.desk"
+		case .apps:			return "square.stack.3d.up.fill"
+		case .games:		return TabEnum._gamesIcon
 		case .library: 		return "square.grid.2x2"
 		case .settings: 	return "gearshape.2"
 		case .certificates: return "person.text.rectangle"
@@ -40,19 +46,29 @@ enum TabEnum: String, CaseIterable, Hashable {
 		switch tab {
 		case .home: HomeView()
 		case .sources: SourcesView()
+		case .apps: CatalogAppsView(kind: .apps)
+		case .games: CatalogAppsView(kind: .games)
 		case .library: LibraryView()
 		case .settings: SettingsView()
 		case .certificates: NBNavigationView(.localized("Certificates")) { CertificatesView() }
 		}
 	}
 	
-	/// Tabs shown in the bottom bar. AppMaster only exposes Home, Apps and Sources here —
-	/// Settings/Certificates are still fully functional but are reached through the
-	/// Profile screen (tap the avatar in Home) instead of taking up a tab slot.
+	/// The App Store's rocket for Games (falls back to a game controller on
+	/// systems that don't ship that symbol).
+	static var _gamesIcon: String {
+		UIImage(systemName: "rocket.fill") != nil ? "rocket.fill" : "gamecontroller.fill"
+	}
+	
+	/// Tabs shown in the bottom bar: Home, Apps, Games and Sources (plus the
+	/// separate search button on iOS 26). The Library of downloaded apps is opened
+	/// from the download button in the Apps tab, and Settings/Certificates are
+	/// reached through the Profile screen (profile icon in Home).
 	static var defaultTabs: [TabEnum] {
 		return [
 			.home,
-			.library,
+			.apps,
+			.games,
 			.sources
 		]
 	}

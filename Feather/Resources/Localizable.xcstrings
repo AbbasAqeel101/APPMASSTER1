@@ -1,6 +1,23 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ available on device": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ متاحة على الجهاز"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ available on device"
+          }
+        }
+      }
+    },
     "%lld Apps": {
       "comment": "Repository app count",
       "extractionState": "manual",
@@ -528,6 +545,23 @@
         }
       }
     },
+    "%lld items": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld عنصر"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld items"
+          }
+        }
+      }
+    },
     "%lld required system dylibs not shown.": {
       "comment": "Number of macho load paths not listed for safety",
       "extractionState": "manual",
@@ -596,6 +630,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "隐藏了%lld个系统dylibs"
+          }
+        }
+      }
+    },
+    "A backup always contains your app settings and sources. Certificates are never included.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحتوي النسخة الاحتياطية دائمًا على إعدادات التطبيق والمصادر. الشهادات لا تُضاف إليها أبدًا."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A backup always contains your app settings and sources. Certificates are never included."
           }
         }
       }
@@ -1042,6 +1093,23 @@
         }
       }
     },
+    "Adds your signed and imported apps to the backup. The file can be several GB, so keep enough free space.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يضيف تطبيقاتك الموقّعة والمستوردة إلى النسخة الاحتياطية. قد يبلغ حجم الملف عدة غيغابايت، لذا تأكد من وجود مساحة فارغة كافية."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adds your signed and imported apps to the backup. The file can be several GB, so keep enough free space."
+          }
+        }
+      }
+    },
     "Advanced": {
       "extractionState": "manual",
       "localizations": {
@@ -1185,6 +1253,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Advanced Settings"
+          }
+        }
+      }
+    },
+    "Alerts & Badge": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التنبيهات والشارة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerts & Badge"
           }
         }
       }
@@ -1858,6 +1943,40 @@
         }
       }
     },
+    "Apps and games": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التطبيقات والألعاب"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apps and games"
+          }
+        }
+      }
+    },
+    "Apps restored: %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التطبيقات المستعادة: %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apps restored: %lld"
+          }
+        }
+      }
+    },
     "Apps you feature or categorize on the dashboard will show up here.": {
       "extractionState": "manual",
       "localizations": {
@@ -1942,6 +2061,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "归档与压缩"
+          }
+        }
+      }
+    },
+    "Archives": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأرشيف"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archives"
+          }
+        }
+      }
+    },
+    "Backup & Restore": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النسخ الاحتياطي والاستعادة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup & Restore"
+          }
+        }
+      }
+    },
+    "Backup restored. Restart the app so every setting applies.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت استعادة النسخة الاحتياطية. أعد تشغيل التطبيق حتى تُطبَّق جميع الإعدادات."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup restored. Restart the app so every setting applies."
           }
         }
       }
@@ -2363,6 +2533,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "在默认情况下，应用的本地化标题保持不变。此选项将取消这一限制。"
+          }
+        }
+      }
+    },
+    "Cache": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الذاكرة المؤقتة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache"
           }
         }
       }
@@ -2817,6 +3004,23 @@
         }
       }
     },
+    "Change Photo": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تغيير الصورة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change Photo"
+          }
+        }
+      }
+    },
     "Check Revokage": {
       "extractionState": "manual",
       "localizations": {
@@ -3050,6 +3254,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "从相片选择"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسح"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "Clears temporary files and cached images. Apps you downloaded or signed are kept.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمسح الملفات المؤقتة والصور المخزنة مؤقتًا. تبقى التطبيقات التي حمّلتها أو وقّعتها."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clears temporary files and cached images. Apps you downloaded or signed are kept."
           }
         }
       }
@@ -3315,6 +3553,23 @@
         }
       }
     },
+    "Copied": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم النسخ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        }
+      }
+    },
     "Copy": {
       "extractionState": "manual",
       "localizations": {
@@ -3459,6 +3714,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "复制下载连接"
+          }
+        }
+      }
+    },
+    "Copy Link": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسخ الرابط"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Link"
+          }
+        }
+      }
+    },
+    "Could not create the backup.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر إنشاء النسخة الاحتياطية."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not create the backup."
+          }
+        }
+      }
+    },
+    "Create Backup": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إنشاء نسخة احتياطية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Backup"
+          }
+        }
+      }
+    },
+    "Creating backup…": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ إنشاء النسخة الاحتياطية…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creating backup…"
           }
         }
       }
@@ -4267,6 +4590,23 @@
         }
       }
     },
+    "Developer Name": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عباس عقيل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbas Aqeel"
+          }
+        }
+      }
+    },
     "Disable Liquid Glass": {
       "extractionState": "manual",
       "localizations": {
@@ -4280,6 +4620,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wyłącz Liquid Glass"
+          }
+        }
+      }
+    },
+    "Disabled": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "معطّل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disabled"
           }
         }
       }
@@ -4978,6 +5335,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "启用液态玻璃"
+          }
+        }
+      }
+    },
+    "Enable Notifications": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تفعيل الإشعارات"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable Notifications"
+          }
+        }
+      }
+    },
+    "Enabled": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفعّل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
           }
         }
       }
@@ -6184,7 +6575,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "الميزات"
+            "value": "المميزات"
           }
         },
         "cs": {
@@ -6682,6 +7073,23 @@
         }
       }
     },
+    "Free Up Space": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحرير مساحة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free Up Space"
+          }
+        }
+      }
+    },
     "Fully Local": {
       "extractionState": "manual",
       "localizations": {
@@ -6808,6 +7216,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "游戏模式"
+          }
+        }
+      }
+    },
+    "Games": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الألعاب"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Games"
           }
         }
       }
@@ -7565,6 +7990,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "帮助"
+          }
+        }
+      }
+    },
+    "Help & Support": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المساعدة والدعم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help & Support"
           }
         }
       }
@@ -8461,6 +8903,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "已导入"
+          }
+        }
+      }
+    },
+    "Imported Apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التطبيقات المستوردة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported Apps"
+          }
+        }
+      }
+    },
+    "Include downloaded apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تضمين التطبيقات المحمّلة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include downloaded apps"
           }
         }
       }
@@ -10023,6 +10499,23 @@
         }
       }
     },
+    "New notifications from AppMaster appear here and as a number on the app icon.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تظهر هنا إشعارات AppMaster الجديدة وكرقم على أيقونة التطبيق."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New notifications from AppMaster appear here and as a number on the app icon."
+          }
+        }
+      }
+    },
     "Nickname (Optional)": {
       "comment": "Certificate custom nickname",
       "extractionState": "manual",
@@ -10555,6 +11048,23 @@
         }
       }
     },
+    "No Results": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد نتائج"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Results"
+          }
+        }
+      }
+    },
     "No active subscription": {
       "extractionState": "manual",
       "localizations": {
@@ -10650,6 +11160,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "未选择文件。"
+          }
+        }
+      }
+    },
+    "No notifications yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد إشعارات بعد"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No notifications yet"
           }
         }
       }
@@ -10827,6 +11354,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "空"
+          }
+        }
+      }
+    },
+    "Not enabled yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غير مفعّل بعد"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enabled yet"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإشعارات"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
           }
         }
       }
@@ -11330,6 +11891,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "开启一个[issue](https://github.com/khcrysalis/Feather/issues)"
+          }
+        }
+      }
+    },
+    "Open iOS Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح إعدادات iOS"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open iOS Settings"
           }
         }
       }
@@ -12796,6 +13374,23 @@
         }
       }
     },
+    "Referral Link": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رابط الإحالة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Referral Link"
+          }
+        }
+      }
+    },
     "Removal": {
       "extractionState": "manual",
       "localizations": {
@@ -12863,6 +13458,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "删除"
+          }
+        }
+      }
+    },
+    "Remove Photo": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف الصورة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Photo"
           }
         }
       }
@@ -14349,6 +14961,40 @@
         }
       }
     },
+    "Restore from Backup": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الاستعادة من نسخة احتياطية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore from Backup"
+          }
+        }
+      }
+    },
+    "Restoring…": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ الاستعادة…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restoring…"
+          }
+        }
+      }
+    },
     "Revoked": {
       "extractionState": "manual",
       "localizations": {
@@ -14593,6 +15239,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "截屏"
+          }
+        }
+      }
+    },
+    "Search": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بحث"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
           }
         }
       }
@@ -15405,6 +16068,40 @@
         }
       }
     },
+    "Share Link": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشاركة الرابط"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share Link"
+          }
+        }
+      }
+    },
+    "Share this link with other people.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شارك هذا الرابط مع الآخرين."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share this link with other people."
+          }
+        }
+      }
+    },
     "Show Sheet when Exporting": {
       "comment": "Archiving opens share sheet",
       "extractionState": "manual",
@@ -15757,6 +16454,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "已签名"
+          }
+        }
+      }
+    },
+    "Signed Apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التطبيقات الموقّعة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signed Apps"
           }
         }
       }
@@ -16566,6 +17280,23 @@
         }
       }
     },
+    "Storage": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التخزين"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage"
+          }
+        }
+      }
+    },
     "Store Cell Appearance": {
       "extractionState": "manual",
       "localizations": {
@@ -16810,6 +17541,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Subscription"
+          }
+        }
+      }
+    },
+    "Success": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم بنجاح"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Success"
           }
         }
       }
@@ -17070,6 +17818,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "团队名"
+          }
+        }
+      }
+    },
+    "Temporary files and cached images will be removed. Your apps and certificates are not affected.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ستُحذف الملفات المؤقتة والصور المخزنة مؤقتًا. لا تتأثر تطبيقاتك وشهاداتك."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temporary files and cached images will be removed. Your apps and certificates are not affected."
           }
         }
       }
@@ -17494,6 +18259,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "为此应用启用Liquid Glass。需要重启应用。"
+          }
+        }
+      }
+    },
+    "This file is not a valid AppMaster backup.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الملف ليس نسخة احتياطية صالحة من AppMaster."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file is not a valid AppMaster backup."
           }
         }
       }
@@ -19034,6 +19816,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "此安装方式仅适用于高级用户！\n\n需要VPN和来自电脑的配对文件。\n\n建议您返回服务器安装方式。"
+          }
+        }
+      }
+    },
+    "used by %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مستخدمة بواسطة %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "used by %@"
           }
         }
       }

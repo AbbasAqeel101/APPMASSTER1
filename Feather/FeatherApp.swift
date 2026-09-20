@@ -38,6 +38,13 @@ struct FeatherApp: App {
 					)
 				}
 			}
+			// pull the latest platform notifications on launch and every time the app returns to the foreground
+			.task {
+				await AppNotificationCenter.shared.refresh()
+			}
+			.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+				Task { await AppNotificationCenter.shared.refresh() }
+			}
 			// dear god help me
 			.onAppear {
 				if let style = UIUserInterfaceStyle(rawValue: UserDefaults.standard.integer(forKey: "Feather.userInterfaceStyle")) {

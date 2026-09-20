@@ -11,7 +11,9 @@ struct VariedTabbarView: View {
 	init() {}
 	
 	var body: some View {
-		if #available(iOS 18, *) {
+		if #available(iOS 26, *) {
+			ExtendedTabbarView26()
+		} else if #available(iOS 18, *) {
 			ExtendedTabbarView()
 		} else {
 			TabbarView()

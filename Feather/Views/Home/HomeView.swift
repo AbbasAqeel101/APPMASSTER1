@@ -23,7 +23,7 @@ import NukeUI
 
 // MARK: - View
 struct HomeView: View {
-	static let companySourceIdentifier = "com.appmaster.companystore"
+	static let companySourceIdentifier = AppMasterConfig.companySourceIdentifier
 
 	@StateObject private var viewModel = SourcesViewModel.shared
 	@State private var _isProfilePresenting = false
@@ -95,6 +95,9 @@ struct HomeView: View {
 				.padding(.vertical, 12)
 			}
 			.toolbar {
+				ToolbarItem(placement: .topBarLeading) {
+					NotificationBellButton()
+				}
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
 						_isProfilePresenting = true

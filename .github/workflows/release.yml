@@ -19,7 +19,7 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_26.3.0.app
 
-      - name: Compile Feather
+      - name: Compile AppMaster
         run: |
           agvtool new-version -all $(git rev-parse HEAD)
           make
@@ -53,14 +53,14 @@ jobs:
           # Read the version straight from the packaged IPA itself
           # (always uses the correct iOS-style Info.plist layout,
           # regardless of what the last local build folder looked like).
-          unzip -p upload/Feather.ipa 'Payload/*.app/Info.plist' > /tmp/Info.plist
+          unzip -p upload/AppMaster.ipa 'Payload/*.app/Info.plist' > /tmp/Info.plist
           VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" /tmp/Info.plist)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Feather v${{ env.VERSION }}
+          name: AppMaster v${{ env.VERSION }}
           tag_name: v${{ env.VERSION }}
           files: |
             upload/*
