@@ -41,7 +41,10 @@ struct LanguageView: View {
 			}
 		}
 		.alert(.localized("Language Changed"), isPresented: $_isRestartAlertPresented) {
-			Button(.localized("OK"), role: .cancel) { }
+			Button(.localized("Later"), role: .cancel) { }
+			Button(.localized("Close App")) {
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { exit(0) }
+			}
 		} message: {
 			Text(.localized("Please restart AppMaster for the new language to fully apply."))
 		}

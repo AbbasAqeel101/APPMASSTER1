@@ -21,6 +21,31 @@ import AltSourceKit
 import NimbleViews
 import NukeUI
 
+// MARK: - Company icon button (Home toolbar, where the bell used to be)
+struct CompanyIconButton: View {
+	@State private var _isPresenting = false
+
+	var body: some View {
+		Button {
+			_isPresenting = true
+		} label: {
+			Image("AppMasterGlyph")
+				.renderingMode(.original)
+				.appIconStyle(size: 30)
+		}
+		.sheet(isPresented: $_isPresenting) {
+			NBNavigationView(.localized("About")) {
+				AboutView()
+					.toolbar {
+						ToolbarItem(placement: .topBarTrailing) {
+							Button(.localized("Done")) { _isPresenting = false }
+						}
+					}
+			}
+		}
+	}
+}
+
 // MARK: - View
 struct HomeView: View {
 	static let companySourceIdentifier = AppMasterConfig.companySourceIdentifier
@@ -96,14 +121,13 @@ struct HomeView: View {
 			}
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
-					NotificationBellButton()
+					CompanyIconButton()
 				}
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
 						_isProfilePresenting = true
 					} label: {
-						Image(systemName: "person.crop.circle.fill")
-							.font(.title2)
+						ProfileToolbarIcon()
 					}
 				}
 			}

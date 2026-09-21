@@ -53,6 +53,29 @@ struct ProfileAvatarView: View {
 	}
 }
 
+// MARK: - Toolbar icon (Home)
+/// Circle in Home's toolbar: the profile photo once one is set, otherwise the default person symbol.
+struct ProfileToolbarIcon: View {
+	@AppStorage("AppMaster.profilePhotoVersion") private var _photoVersion: Int = 0
+
+	var body: some View {
+		Group {
+			if let image = AppMasterProfile.loadPhoto() {
+				Image(uiImage: image)
+					.renderingMode(.original)
+					.resizable()
+					.scaledToFill()
+					.frame(width: 30, height: 30)
+					.clipShape(Circle())
+			} else {
+				Image(systemName: "person.crop.circle.fill")
+					.font(.title2)
+			}
+		}
+		.id(_photoVersion)
+	}
+}
+
 // MARK: - View
 struct ProfileView: View {
 	@Environment(\.dismiss) private var dismiss
@@ -150,8 +173,9 @@ extension ProfileView {
 				Label {
 					Text(verbatim: .localized("About %@", arguments: Bundle.main.name))
 				} icon: {
-					Image("AppMasterLogo")
-						.appIconStyle(size: 23)
+					Image("AppMasterGlyph")
+						.renderingMode(.original)
+						.appIconStyle(size: 30)
 				}
 			}
 		}

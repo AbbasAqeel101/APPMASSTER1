@@ -27,8 +27,8 @@ extension AboutView {
 		Section {
 			VStack(spacing: 10) {
 				Image("AppMasterLogo")
-					.appIconStyle(size: 128)
-					.shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 4)
+					.appIconStyle(size: 76)
+					.shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 3)
 
 				Text(Bundle.main.name)
 					.font(.largeTitle)

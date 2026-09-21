@@ -74,11 +74,18 @@ struct BackupRestoreView: View {
 				Text(.localized("A backup always contains your app settings and sources. Certificates are never included."))
 			}
 		}
-		.fileImporter(
-			isPresented: $_isImporterPresenting,
-			allowedContentTypes: [.zip]
-		) { result in
-			_handleImport(result)
+		.sheet(isPresented: $_isImporterPresenting) {
+			// Same UIKit picker the Library uses for IPA files (it works on device).
+			// Any file type is allowed so the exported .zip can never be greyed out.
+			FileImporterRepresentableView(
+				allowedContentTypes: [.zip, .json, .item],
+				onDocumentsPicked: { urls in
+					_isImporterPresenting = false
+					guard let url = urls.first else { return }
+					_handleImport(.success(url))
+				}
+			)
+			.ignoresSafeArea()
 		}
 		.alert(_alertTitle, isPresented: $_isAlertPresenting) {
 			Button(.localized("OK"), role: .cancel) { }
@@ -251,13 +258,35 @@ extension BackupRestoreView {
 			.appendingPathComponent("AppMasterRestore_\(UUID().uuidString)", isDirectory: true)
 		try fileManager.createDirectory(at: workDir, withIntermediateDirectories: true)
 
-		try Zip.unzipFile(
-			url,
-			destination: workDir,
-			overwrite: true,
-			password: nil,
-			progress: nil
-		)
+		// A bare manifest.json (from an already extracted backup) restores settings and sources only.
+		if url.pathExtension.lowercased() == "json" {
+			try fileManager.copyItem(at: url, to: workDir.appendingPathComponent("manifest.json"))
+			return workDir
+		}
+
+		// The unzip library only accepts a ".zip" file name, so anything else is copied first.
+		var zipURL = url
+		if url.pathExtension.lowercased() != "zip" {
+			zipURL = workDir.appendingPathComponent("AppMasterBackup.zip")
+			try fileManager.copyItem(at: url, to: zipURL)
+		}
+
+		do {
+			try Zip.unzipFile(
+				zipURL,
+				destination: workDir,
+				overwrite: true,
+				password: nil,
+				progress: nil
+			)
+		} catch {
+			try? fileManager.removeItem(at: workDir)
+			throw BackupError.invalidFile
+		}
+
+		if zipURL != url {
+			try? fileManager.removeItem(at: zipURL)
+		}
 
 		return workDir
 	}
@@ -274,14 +303,17 @@ extension BackupRestoreView {
 						try BackupRestoreView._extract(url)
 					}.value
 
-					let restoredApps = try _apply(workDir: workDir)
+					let outcome = try _apply(workDir: workDir)
 					try? FileManager.default.removeItem(at: workDir)
 
 					_isWorking = false
 
 					var message: String = .localized("Backup restored. Restart the app so every setting applies.")
-					if restoredApps > 0 {
-						message += "\n" + String.localized("Apps restored: %lld", arguments: restoredApps)
+					if outcome.restored > 0 {
+						message += "\n" + String.localized("Apps restored: %lld", arguments: outcome.restored)
+					}
+					if outcome.skipped > 0 {
+						message += "\n" + String.localized("Apps skipped (already installed): %lld", arguments: outcome.skipped)
 					}
 					_show(title: .localized("Success"), message: message)
 				} catch {
@@ -294,9 +326,34 @@ extension BackupRestoreView {
 		}
 	}
 
+	/// Finds manifest.json at the top of the extracted backup, or inside one wrapping
+	/// folder (what Files' "Compress" produces when a folder is zipped).
+	private static func _locateManifest(in directory: URL) -> URL? {
+		let fileManager = FileManager.default
+		let direct = directory.appendingPathComponent("manifest.json")
+		if fileManager.fileExists(atPath: direct.path) { return direct }
+
+		guard let children = try? fileManager.contentsOfDirectory(
+			at: directory,
+			includingPropertiesForKeys: nil,
+			options: [.skipsHiddenFiles]
+		) else {
+			return nil
+		}
+
+		for child in children {
+			let candidate = child.appendingPathComponent("manifest.json")
+			if fileManager.fileExists(atPath: candidate.path) { return candidate }
+		}
+		return nil
+	}
+
 	/// Applies the extracted backup. Returns how many apps were restored.
-	private func _apply(workDir: URL) throws -> Int {
-		let manifestURL = workDir.appendingPathComponent("manifest.json")
+	private func _apply(workDir: URL) throws -> (restored: Int, skipped: Int) {
+		guard let manifestURL = Self._locateManifest(in: workDir) else {
+			throw BackupError.invalidFile
+		}
+		let backupRoot = manifestURL.deletingLastPathComponent()
 		let data = try Data(contentsOf: manifestURL)
 
 		guard
@@ -339,16 +396,21 @@ extension BackupRestoreView {
 		}
 
 		var restored = 0
+		var skipped = 0
 		if let signed = root["signed"] as? [[String: String]] {
-			restored += _restoreApps(signed, isSigned: true, workDir: workDir)
+			let result = _restoreApps(signed, isSigned: true, workDir: backupRoot)
+			restored += result.restored
+			skipped += result.skipped
 		}
 		if let imported = root["imported"] as? [[String: String]] {
-			restored += _restoreApps(imported, isSigned: false, workDir: workDir)
+			let result = _restoreApps(imported, isSigned: false, workDir: backupRoot)
+			restored += result.restored
+			skipped += result.skipped
 		}
-		return restored
+		return (restored, skipped)
 	}
 
-	private func _restoreApps(_ records: [[String: String]], isSigned: Bool, workDir: URL) -> Int {
+	private func _restoreApps(_ records: [[String: String]], isSigned: Bool, workDir: URL) -> (restored: Int, skipped: Int) {
 		let fileManager = FileManager.default
 
 		let sourceRoot = workDir.appendingPathComponent(isSigned ? "Signed" : "Unsigned", isDirectory: true)
@@ -356,6 +418,7 @@ extension BackupRestoreView {
 		try? fileManager.createDirectoryIfNeeded(at: destinationRoot)
 
 		var restored = 0
+		var skipped = 0
 
 		for record in records {
 			guard let uuid = record["uuid"] else { continue }
@@ -363,10 +426,9 @@ extension BackupRestoreView {
 			let from = sourceRoot.appendingPathComponent(uuid, isDirectory: true)
 			let to = destinationRoot.appendingPathComponent(uuid, isDirectory: true)
 
-			guard
-				fileManager.fileExists(atPath: from.path),
-				!fileManager.fileExists(atPath: to.path)
-			else {
+			guard fileManager.fileExists(atPath: from.path) else { continue }
+			guard !fileManager.fileExists(atPath: to.path) else {
+				skipped += 1
 				continue
 			}
 
@@ -405,7 +467,7 @@ extension BackupRestoreView {
 			restored += 1
 		}
 
-		return restored
+		return (restored, skipped)
 	}
 
 	private func _show(title: String, message: String) {

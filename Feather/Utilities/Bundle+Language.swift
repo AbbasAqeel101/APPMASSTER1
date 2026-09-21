@@ -53,13 +53,31 @@ extension Bundle {
 		}
 		set {
 			UserDefaults.standard.set(newValue?.rawValue, forKey: storageKey)
+			_syncSystemLanguage(newValue)
 			_applyLanguageOverride()
 		}
 	}
 
 	/// Call once at app launch to apply a previously-saved override, if any.
 	static func applyStoredLanguageOverrideIfNeeded() {
+		// Also covers users who picked a language before the system sync existed.
+		if let language = appLanguageOverride {
+			_syncSystemLanguage(language)
+		}
 		_applyLanguageOverride()
+	}
+
+	/// Tells iOS itself which language this app should launch in. The Bundle
+	/// swizzle below only redirects `NSLocalizedString` lookups; SwiftUI's own
+	/// lookups (`Text("key")`, `Label("key")`, ...), the layout direction and the
+	/// system controls follow the app's `AppleLanguages`, so without this only a
+	/// few titles switched language and everything else stayed Arabic.
+	private static func _syncSystemLanguage(_ language: AppLanguage?) {
+		if let language {
+			UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
+		} else {
+			UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+		}
 	}
 
 	private static func _applyLanguageOverride() {

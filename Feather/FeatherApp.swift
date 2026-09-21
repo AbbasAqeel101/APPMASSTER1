@@ -19,6 +19,31 @@ struct FeatherApp: App {
 	@StateObject var downloadManager = DownloadManager.shared
 	let storage = Storage.shared
 	
+	// Same key as Bundle.appLanguageOverride (Profile > Language). Read here so the
+	// whole SwiftUI hierarchy switches language right away instead of only the
+	// strings that go through NSLocalizedString.
+	@AppStorage("AppMaster.appLanguage") private var _appLanguage: String = ""
+	
+	private var _selectedLanguage: Bundle.AppLanguage? {
+		Bundle.AppLanguage(rawValue: _appLanguage)
+	}
+	
+	private var _locale: Locale {
+		switch _selectedLanguage {
+		case .arabic: return Locale(identifier: "ar@numbers=latn")
+		case .english: return Locale(identifier: "en")
+		case nil: return Locale.autoupdatingCurrent
+		}
+	}
+	
+	private var _layoutDirection: LayoutDirection {
+		switch _selectedLanguage {
+		case .arabic: return .rightToLeft
+		case .english: return .leftToRight
+		case nil: return UIApplication.shared.userInterfaceLayoutDirection == .rightToLeft ? .rightToLeft : .leftToRight
+		}
+	}
+	
 	var body: some Scene {
 		WindowGroup {
 			VStack {
@@ -29,6 +54,8 @@ struct FeatherApp: App {
 					.onOpenURL(perform: _handleURL)
 					.transition(.move(edge: .top).combined(with: .opacity))
 			}
+			.environment(\.locale, _locale)
+			.environment(\.layoutDirection, _layoutDirection)
 			.animation(.smooth, value: downloadManager.manualDownloads.description)
 			.onReceive(NotificationCenter.default.publisher(for: .heartbeatInvalidHost)) { _ in
 				DispatchQueue.main.async {
