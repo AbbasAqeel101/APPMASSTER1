@@ -56,6 +56,14 @@ class DownloadManager: NSObject, ObservableObject {
 	
 	private var _session: URLSession!
 	
+	/// Set by AppDelegate.application(_:handleEventsForBackgroundURLSession:completionHandler:)
+	/// when iOS relaunches/wakes the app to report finished background downloads.
+	/// Must be called (on the main thread) once every queued delegate callback has
+	/// been processed, or the system keeps the app suspended in the background.
+	var backgroundCompletionHandler: (() -> Void)?
+	
+	private static let backgroundSessionIdentifier = "com.appmaster.backgrounddownloads"
+	
 	#if !targetEnvironment(macCatalyst)
 	private func _updateBackgroundAudioState() {
 		if #unavailable(iOS 26.0){
@@ -70,7 +78,20 @@ class DownloadManager: NSObject, ObservableObject {
 	
 	override init() {
 		super.init()
+		// AppMaster: downloads must keep going (and be resumable) even if the
+		// person leaves the app or the app gets suspended — previously this used
+		// a plain .default session, which iOS pauses shortly after backgrounding,
+		// forcing people to sit inside the app and wait for big IPAs to finish.
+		// A background URLSession configuration hands the transfer to a system
+		// daemon that keeps running independently of the app's own lifecycle.
+		#if targetEnvironment(macCatalyst)
 		let configuration = URLSessionConfiguration.default
+		#else
+		let configuration = URLSessionConfiguration.background(withIdentifier: Self.backgroundSessionIdentifier)
+		configuration.isDiscretionary = false
+		configuration.sessionSendsLaunchEvents = true
+		configuration.shouldUseExtendedBackgroundIdleMode = true
+		#endif
 		_session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
 	}
 	
@@ -251,6 +272,17 @@ extension DownloadManager: URLSessionDownloadDelegate {
 			if let index = self.getDownloadIndex(by: download.id) {
 				self.downloads.remove(at: index)
 			}
+		}
+	}
+	
+	// Called once every queued delegate callback for the background session has
+	// been delivered, after iOS relaunches/wakes the app to hand off a finished
+	// background download. Must call the stored system completion handler (set
+	// by AppDelegate) or the app stays frozen in the background needlessly.
+	func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+		DispatchQueue.main.async {
+			self.backgroundCompletionHandler?()
+			self.backgroundCompletionHandler = nil
 		}
 	}
 }

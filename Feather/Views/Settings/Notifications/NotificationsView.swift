@@ -62,6 +62,11 @@ struct NotificationsView: View {
 	@ObservedObject private var _center = AppNotificationCenter.shared
 	@Environment(\.scenePhase) private var _scenePhase
 	@State private var _status: UNAuthorizationStatus = .notDetermined
+	// Real permission status isn't known yet on first render (fetched
+	// asynchronously). Keep the "Enable Notifications" button hidden
+	// until that check finishes, otherwise it flashes for a frame every
+	// time this screen opens — even after permission was already granted.
+	@State private var _hasCheckedStatus = false
 
 	private var _statusText: String {
 		switch _status {
@@ -119,11 +124,11 @@ extension NotificationsView {
 					.foregroundStyle(.secondary)
 			}
 
-			if _status == .notDetermined {
+			if _hasCheckedStatus && _status == .notDetermined {
 				Button(.localized("Enable Notifications")) {
 					_request()
 				}
-			} else if _status == .denied {
+			} else if _hasCheckedStatus && _status == .denied {
 				Button(.localized("Open iOS Settings")) {
 					_openSettings()
 				}
@@ -176,6 +181,7 @@ extension NotificationsView {
 	private func _refreshStatus() async {
 		let settings = await UNUserNotificationCenter.current().notificationSettings()
 		_status = settings.authorizationStatus
+		_hasCheckedStatus = true
 	}
 
 	private func _request() {

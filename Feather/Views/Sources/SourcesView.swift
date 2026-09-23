@@ -21,8 +21,14 @@ struct SourcesView: View {
 	@State private var _addingSourceLoading = false
 	@State private var _searchText = ""
 	
+	// The company catalog is shown natively in Home/Apps/Games, so it's hidden
+	// from the Sources list here instead of appearing as just another repo.
+	private var _visibleSources: [AltSource] {
+		_sources.filter { $0.identifier != AppMasterConfig.companySourceIdentifier }
+	}
+
 	private var _filteredSources: [AltSource] {
-		_sources.filter { _searchText.isEmpty || ($0.name?.localizedCaseInsensitiveContains(_searchText) ?? false) }
+		_visibleSources.filter { _searchText.isEmpty || ($0.name?.localizedCaseInsensitiveContains(_searchText) ?? false) }
 	}
 	
 	@FetchRequest(
@@ -38,7 +44,7 @@ struct SourcesView: View {
 				if !_filteredSources.isEmpty {
 					Section {
 						NavigationLink {
-							SourceAppsView(object: Array(_sources), viewModel: viewModel)
+							SourceAppsView(object: Array(_visibleSources), viewModel: viewModel)
 						} label: {
 							let isRegular = horizontalSizeClass != .compact
 							HStack(spacing: 18) {

@@ -31,7 +31,7 @@ struct CompanyIconButton: View {
 		} label: {
 			Image("AppMasterGlyph")
 				.renderingMode(.original)
-				.appIconStyle(size: 30)
+				.appIconStyle(size: 30, isCircle: true)
 		}
 		.sheet(isPresented: $_isPresenting) {
 			NBNavigationView(.localized("About")) {

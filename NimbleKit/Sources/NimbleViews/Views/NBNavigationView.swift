@@ -14,7 +14,9 @@ public struct NBNavigationView<Content>: View where Content: View {
 	
 	public init(
 		_ title: String,
-		displayMode: NavigationBarItem.TitleDisplayMode = .automatic,
+		// AppMaster: titles stay small & centered everywhere (no large title
+		// that shrinks/moves as you scroll), matching the requested design.
+		displayMode: NavigationBarItem.TitleDisplayMode = .inline,
 		@ViewBuilder content: () -> Content
 	) {
 		self._title = title

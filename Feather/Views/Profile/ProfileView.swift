@@ -64,14 +64,16 @@ struct ProfileToolbarIcon: View {
 				Image(uiImage: image)
 					.renderingMode(.original)
 					.resizable()
-					.scaledToFill()
-					.frame(width: 30, height: 30)
-					.clipShape(Circle())
+					.aspectRatio(contentMode: .fill)
 			} else {
 				Image(systemName: "person.crop.circle.fill")
-					.font(.title2)
+					.resizable()
+					.aspectRatio(contentMode: .fit)
+					.foregroundStyle(.secondary)
 			}
 		}
+		.frame(width: 30, height: 30)
+		.clipShape(Circle())
 		.id(_photoVersion)
 	}
 }

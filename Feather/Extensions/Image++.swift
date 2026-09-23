@@ -23,8 +23,13 @@ extension Image {
 		let radius = isCircle ? (size / 2) : (size * multiplier)
 		
 		return self.resizable()
-			.scaledToFit()
+			// Circular avatars/badges must always fill the shape edge-to-edge, even
+			// if the source asset isn't perfectly square — scaledToFit can leave
+			// visible gaps inside the circle. Square app-icon assets keep fitting
+			// so nothing gets cropped.
+			.aspectRatio(contentMode: isCircle ? .fill : .fit)
 			.frame(width: size, height: size)
+			.clipped()
 			.background(
 				RoundedRectangle(cornerRadius: radius, style: .continuous)
 					.fill(background)

@@ -20,7 +20,8 @@ public struct NBList<Content>: View where Content: View {
 	
 	public init(
 		_ title: String,
-		displayMode: NavigationBarItem.TitleDisplayMode = .automatic,
+		// AppMaster: titles stay small & centered everywhere (see NBNavigationView).
+		displayMode: NavigationBarItem.TitleDisplayMode = .inline,
 		type: NBListType = .form,
 		@ViewBuilder content: () -> Content
 	) {

@@ -191,6 +191,19 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		return true
 	}
 
+	// iOS calls this to relaunch/wake the app when a background download
+	// (started via DownloadManager's background URLSession) finishes while the
+	// app wasn't in the foreground. The completion handler must be kept and
+	// called only after DownloadManager has processed every pending delegate
+	// callback for that session (see urlSessionDidFinishEvents below).
+	func application(
+		_ application: UIApplication,
+		handleEventsForBackgroundURLSession identifier: String,
+		completionHandler: @escaping () -> Void
+	) {
+		DownloadManager.shared.backgroundCompletionHandler = completionHandler
+	}
+
 	/// Auto-adds our company's app catalog as a source on first launch.
 	/// The URL below must point to an endpoint your backend generates dynamically
 	/// (AltStore/AltSourceKit JSON format — see ASRepository.swift) so that any
