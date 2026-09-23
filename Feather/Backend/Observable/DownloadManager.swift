@@ -30,6 +30,11 @@ class Download: Identifiable, @unchecked Sendable {
 	let fileName: String
 	let onlyArchiving: Bool
 	var sourceProvenance: SourceAppProvenance?
+	/// AppMaster: sign with the default certificate and install right after the
+	/// download/import finishes (see `OneTapInstaller`).
+	var autoInstall: Bool = false
+	/// Set by `AppFileHandler` once the IPA has been imported into the Library.
+	var importedUUID: String?
 	
 	init(
 		id: String,
@@ -98,17 +103,20 @@ class DownloadManager: NSObject, ObservableObject {
 	func startDownload(
 		from url: URL,
 		id: String = UUID().uuidString,
-		sourceProvenance: SourceAppProvenance? = nil
+		sourceProvenance: SourceAppProvenance? = nil,
+		autoInstall: Bool = false
 	) -> Download {
 		let requestHasSourceProvenance = sourceProvenance != nil
 		if let existingDownload = downloads.first(where: {
 			$0.url == url && ($0.sourceProvenance != nil) == requestHasSourceProvenance
 		}) {
+			if autoInstall { existingDownload.autoInstall = true }
 			resumeDownload(existingDownload)
 			return existingDownload
 		}
 		
 		let download = Download(id: id, url: url, sourceProvenance: sourceProvenance)
+		download.autoInstall = autoInstall
 		
 		let task = _session.downloadTask(with: url)
 		download.task = task
@@ -163,6 +171,7 @@ class DownloadManager: NSObject, ObservableObject {
 	
 	func cancelDownload(_ download: Download) {
 		download.task?.cancel()
+		if download.autoInstall { OneTapInstaller.shared.reset() }
 		
 		if let index = downloads.firstIndex(where: { $0.id == download.id }) {
 			downloads.remove(at: index)
@@ -215,6 +224,11 @@ extension DownloadManager: URLSessionDownloadDelegate {
 					self._updateBackgroundAudioState()
 					#endif
 				}
+				
+				// AppMaster: one-tap install (sign with the default certificate, then install)
+				if dl.autoInstall {
+					OneTapInstaller.shared.importFinished(download: dl, error: err)
+				}
 			}
 		}
 	}
@@ -238,6 +252,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 			try handlePachageFile(url: destinationURL, dl: download)
 		} catch {
 			print("Error handling downloaded file: \(error.localizedDescription)")
+			if download.autoInstall { OneTapInstaller.shared.fail(error.localizedDescription) }
 		}
 	}
 	
@@ -261,7 +276,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 	
 	func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
 		guard
-			let _ = error,
+			let error,
 			let downloadTask = task as? URLSessionDownloadTask,
 			let download = getDownloadTask(by: downloadTask)
 		else {
@@ -272,6 +287,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 			if let index = self.getDownloadIndex(by: download.id) {
 				self.downloads.remove(at: index)
 			}
+			if download.autoInstall { OneTapInstaller.shared.fail(error.localizedDescription) }
 		}
 	}
 	

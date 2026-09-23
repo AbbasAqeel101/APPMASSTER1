@@ -19958,6 +19958,125 @@
           }
         }
       }
+    },
+    "Match Certificate Identifier": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مطابقة معرّف الشهادة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match Certificate Identifier"
+          }
+        }
+      }
+    },
+    "Use %@ from the selected provisioning profile.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم %@ من ملف التزويد المحدد."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use %@ from the selected provisioning profile."
+          }
+        }
+      }
+    },
+    "Downloading %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تنزيل %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading %@"
+          }
+        }
+      }
+    },
+    "Signing %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ توقيع %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signing %@"
+          }
+        }
+      }
+    },
+    "Ready to install %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جاهز لتثبيت %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready to install %@"
+          }
+        }
+      }
+    },
+    "Add a certificate first. The app will be saved in the Library.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أضف شهادة أولاً. سيُحفظ التطبيق في المكتبة."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a certificate first. The app will be saved in the Library."
+          }
+        }
+      }
+    },
+    "Could not find the downloaded app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر العثور على التطبيق الذي تم تنزيله."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not find the downloaded app."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

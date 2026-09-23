@@ -21,6 +21,33 @@ import AltSourceKit
 import NimbleViews
 import NukeUI
 
+// MARK: - Toolbar item without the system glass capsule
+/// On iOS 26 every toolbar item is drawn inside a big round "glass" button, which
+/// left our avatar/logo floating in the middle of an empty circle. This wrapper
+/// removes that background (iOS 26+) so the image itself is the circle and fills
+/// it edge to edge. On older iOS versions it is just a regular ToolbarItem.
+struct AvatarToolbarItem<Content: View>: ToolbarContent {
+	private let _placement: ToolbarItemPlacement
+	private let _content: Content
+
+	init(placement: ToolbarItemPlacement, @ViewBuilder content: () -> Content) {
+		self._placement = placement
+		self._content = content()
+	}
+
+	var body: some ToolbarContent {
+		if #available(iOS 26.0, *) {
+			ToolbarItem(placement: _placement) { _content }
+				.sharedBackgroundVisibility(.hidden)
+		} else {
+			ToolbarItem(placement: _placement) { _content }
+		}
+	}
+}
+
+/// Diameter of the round Home toolbar buttons (company logo + profile photo).
+let kHomeToolbarAvatarSize: CGFloat = 38
+
 // MARK: - Company icon button (Home toolbar, where the bell used to be)
 struct CompanyIconButton: View {
 	@State private var _isPresenting = false
@@ -31,8 +58,9 @@ struct CompanyIconButton: View {
 		} label: {
 			Image("AppMasterGlyph")
 				.renderingMode(.original)
-				.appIconStyle(size: 30, isCircle: true)
+				.appIconStyle(size: kHomeToolbarAvatarSize, isCircle: true)
 		}
+		.buttonStyle(.plain)
 		.sheet(isPresented: $_isPresenting) {
 			NBNavigationView(.localized("About")) {
 				AboutView()
@@ -120,15 +148,16 @@ struct HomeView: View {
 				.padding(.vertical, 12)
 			}
 			.toolbar {
-				ToolbarItem(placement: .topBarLeading) {
+				AvatarToolbarItem(placement: .topBarLeading) {
 					CompanyIconButton()
 				}
-				ToolbarItem(placement: .topBarTrailing) {
+				AvatarToolbarItem(placement: .topBarTrailing) {
 					Button {
 						_isProfilePresenting = true
 					} label: {
 						ProfileToolbarIcon()
 					}
+					.buttonStyle(.plain)
 				}
 			}
 			.sheet(isPresented: $_isProfilePresenting) {

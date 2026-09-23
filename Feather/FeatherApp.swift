@@ -17,6 +17,7 @@ struct FeatherApp: App {
 	let heartbeat = HeartbeatManager.shared
 	
 	@StateObject var downloadManager = DownloadManager.shared
+	@StateObject var oneTapInstaller = OneTapInstaller.shared
 	let storage = Storage.shared
 	
 	// Same key as Bundle.appLanguageOverride (Profile > Language). Read here so the
@@ -57,6 +58,17 @@ struct FeatherApp: App {
 			.environment(\.locale, _locale)
 			.environment(\.layoutDirection, _layoutDirection)
 			.animation(.smooth, value: downloadManager.manualDownloads.description)
+			// one-tap install: status capsule + the install sheet that opens the iOS prompt
+			.overlay(alignment: .bottom) {
+				OneTapToastView()
+					.padding(.horizontal, 20)
+					.padding(.bottom, 92)
+			}
+			.sheet(item: $oneTapInstaller.installApp) { app in
+				InstallPreviewView(app: app.base, isSharing: app.archive)
+					.presentationDetents([.height(200)])
+					.presentationDragIndicator(.visible)
+			}
 			.onReceive(NotificationCenter.default.publisher(for: .heartbeatInvalidHost)) { _ in
 				DispatchQueue.main.async {
 					UIAlertController.showAlertWithOk(

@@ -21,12 +21,30 @@ struct SigningPropertiesView: View {
 	var title: String
 	var initialValue: String 
 	@Binding var bindingValue: String?
+	/// App identifier found in the selected certificate's provisioning profile
+	/// (the value right after the team ID in `application-identifier`). When set,
+	/// a "Match Certificate Identifier" row is shown under the text field.
+	var certificateIdentifier: String? = nil
 	
 	// MARK: Body
 	var body: some View {
 		NBList(title) {
-			TextField(initialValue, text: $text)
-				.textInputAutocapitalization(.none)
+			Section {
+				TextField(initialValue, text: $text)
+					.textInputAutocapitalization(.none)
+			}
+			
+			if let certificateIdentifier {
+				Section {
+					Button {
+						text = certificateIdentifier
+					} label: {
+						Label(String.localized("Match Certificate Identifier"), systemImage: "checkmark.seal")
+					}
+				} footer: {
+					Text(String.localized("Use %@ from the selected provisioning profile.", arguments: certificateIdentifier))
+				}
+			}
 		}
 		.toolbar {
 			NBToolbarButton(

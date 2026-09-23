@@ -43,10 +43,15 @@ struct DownloadButtonView: View {
 			} else {
 				Button {
 					if let url = app.currentDownloadUrl {
+						// AppMaster: one tap = download -> sign -> install.
+						// If there is no certificate yet, `begin` tells the person
+						// and the app is simply saved in the Library like before.
+						let autoInstall = OneTapInstaller.shared.begin(name: app.currentName)
 						_ = downloadManager.startDownload(
 							from: url,
 							id: app.currentUniqueId,
-							sourceProvenance: _sourceProvenance()
+							sourceProvenance: _sourceProvenance(),
+							autoInstall: autoInstall
 						)
 					}
 				} label: {

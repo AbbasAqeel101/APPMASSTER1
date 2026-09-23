@@ -114,6 +114,9 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 		
 		let bundle = Bundle(url: appUrl)
 		
+		// lets the one-tap installer find the app it just imported
+		_download?.importedUUID = _uuid
+		
 		Storage.shared.addImported(
 			uuid: _uuid,
 			source: _sourceProvenance?.sourceRepositoryURL,

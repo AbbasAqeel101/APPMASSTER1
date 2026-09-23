@@ -97,6 +97,36 @@ extension Storage {
 		return read.decoded
 	}
 	
+	/// The explicit App ID stored in the certificate's provisioning profile, without
+	/// the team-ID prefix: `3Z654PH6LH.app.tangerine1895.ziziphus8498` -> `app.tangerine1895.ziziphus8498`.
+	/// Returns `nil` for wildcard profiles (`TEAMID.*` / `TEAMID.com.foo.*`) because they
+	/// accept any matching bundle identifier and there is nothing specific to match.
+	func getCertificateAppIdentifier(for cert: CertificatePair) -> String? {
+		guard
+			let decoded = getProvisionFileDecoded(for: cert),
+			let full = (decoded.Entitlements?["application-identifier"]?.value as? String)?
+				.trimmingCharacters(in: .whitespacesAndNewlines),
+			!full.isEmpty
+		else {
+			return nil
+		}
+		
+		// `application-identifier` is always "<PREFIX>.<bundle id>" and the prefix
+		// (team ID, e.g. 3Z654PH6LH) never contains a dot, so drop everything up to
+		// and including the first dot. The result starts with "app." / "com." / ...
+		guard let dot = full.firstIndex(of: ".") else {
+			return nil
+		}
+		
+		let identifier = String(full[full.index(after: dot)...])
+		
+		guard !identifier.isEmpty, !identifier.contains("*") else {
+			return nil
+		}
+		
+		return identifier
+	}
+	
 	func getUuidDirectory(for cert: CertificatePair) -> URL? {
 		guard let uuid = cert.uuid else {
 			return nil

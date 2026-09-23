@@ -72,8 +72,9 @@ struct ProfileToolbarIcon: View {
 					.foregroundStyle(.secondary)
 			}
 		}
-		.frame(width: 30, height: 30)
+		.frame(width: kHomeToolbarAvatarSize, height: kHomeToolbarAvatarSize)
 		.clipShape(Circle())
+		.overlay(Circle().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))
 		.id(_photoVersion)
 	}
 }
