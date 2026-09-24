@@ -20077,6 +20077,57 @@
           }
         }
       }
+    },
+    "Enable notifications to receive updates": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قم بتفعيل الإشعارات لتلقي التحديثات"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable notifications to receive updates"
+          }
+        }
+      }
+    },
+    "Preparing %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تجهيز %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing %@"
+          }
+        }
+      }
+    },
+    "Download interrupted. Check your connection and try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انقطع التحميل. تحقق من الاتصال وحاول مرة أخرى."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download interrupted. Check your connection and try again."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

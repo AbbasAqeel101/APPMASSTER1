@@ -23,6 +23,11 @@ struct DownloadButtonView: View {
 		ZStack {
 			if let currentDownload = downloadManager.getDownload(by: app.currentUniqueId) {
 				ZStack {
+					// faint full ring so the button is readable even before the first byte arrives
+					Circle()
+						.stroke(Color.accentColor.opacity(0.22), lineWidth: 2.3)
+						.frame(width: 31, height: 31)
+
 					Circle()
 						.trim(from: 0, to: downloadProgress)
 						.stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2.3, lineCap: .round))

@@ -169,7 +169,7 @@ extension ProfileView {
 			NavigationLink(destination: AppearanceView()) {
 				Label(.localized("Appearance"), systemImage: "paintbrush")
 			}
-			NavigationLink(destination: NotificationsView()) {
+			NavigationLink(destination: NotificationsView(mode: .settings)) {
 				Label(.localized("Notifications"), systemImage: "bell.badge")
 			}
 			NavigationLink(destination: AboutView()) {

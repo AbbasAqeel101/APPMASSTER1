@@ -35,6 +35,8 @@ class Download: Identifiable, @unchecked Sendable {
 	var autoInstall: Bool = false
 	/// Set by `AppFileHandler` once the IPA has been imported into the Library.
 	var importedUUID: String?
+	/// Consecutive automatic retries of a one-tap download (reset whenever bytes arrive).
+	var retryCount: Int = 0
 	
 	init(
 		id: String,
@@ -60,6 +62,9 @@ class DownloadManager: NSObject, ObservableObject {
 	}
 	
 	private var _session: URLSession!
+	/// Plain (foreground) session used by the one-tap install: real progress callbacks and a
+	/// transfer that stalls times out and is retried instead of hanging on a dead spinner.
+	private var _foregroundSession: URLSession!
 	
 	/// Set by AppDelegate.application(_:handleEventsForBackgroundURLSession:completionHandler:)
 	/// when iOS relaunches/wakes the app to report finished background downloads.
@@ -98,6 +103,18 @@ class DownloadManager: NSObject, ObservableObject {
 		configuration.shouldUseExtendedBackgroundIdleMode = true
 		#endif
 		_session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+		
+		let foreground = URLSessionConfiguration.default
+		foreground.waitsForConnectivity = false
+		foreground.timeoutIntervalForRequest = 30
+		foreground.timeoutIntervalForResource = 60 * 60
+		foreground.requestCachePolicy = .reloadIgnoringLocalCacheData
+		foreground.urlCache = nil
+		_foregroundSession = URLSession(configuration: foreground, delegate: self, delegateQueue: nil)
+	}
+	
+	private func _urlSession(for download: Download) -> URLSession {
+		download.autoInstall ? _foregroundSession : _session
 	}
 	
 	func startDownload(
@@ -118,7 +135,7 @@ class DownloadManager: NSObject, ObservableObject {
 		let download = Download(id: id, url: url, sourceProvenance: sourceProvenance)
 		download.autoInstall = autoInstall
 		
-		let task = _session.downloadTask(with: url)
+		let task = _urlSession(for: download).downloadTask(with: url)
 		download.task = task
 		task.resume()
 		
@@ -151,7 +168,7 @@ class DownloadManager: NSObject, ObservableObject {
 	
 	func resumeDownload(_ download: Download) {
 		if let resumeData = download.resumeData {
-			let task = _session.downloadTask(withResumeData: resumeData)
+			let task = _urlSession(for: download).downloadTask(withResumeData: resumeData)
 			download.task = task
 			task.resume()
 			
@@ -159,7 +176,7 @@ class DownloadManager: NSObject, ObservableObject {
 			_updateBackgroundAudioState()
 			#endif
 		} else if let url = download.task?.originalRequest?.url {
-			let task = _session.downloadTask(with: url)
+			let task = _urlSession(for: download).downloadTask(with: url)
 			download.task = task
 			task.resume()
 			
@@ -236,6 +253,10 @@ extension DownloadManager: URLSessionDownloadDelegate {
 	func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
 		guard let download = getDownloadTask(by: downloadTask) else { return }
 		
+		if download.autoInstall {
+			DispatchQueue.main.async { OneTapInstaller.shared.markPreparing() }
+		}
+		
 		let tempDirectory = FileManager.default.temporaryDirectory
 		let customTempDir = tempDirectory.appendingPathComponent("FeatherDownloads", isDirectory: true)
 		
@@ -263,8 +284,13 @@ extension DownloadManager: URLSessionDownloadDelegate {
 			download.progress = totalBytesExpectedToWrite > 0
 			? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
 			: 0
+			if totalBytesWritten > download.bytesDownloaded { download.retryCount = 0 }
 			download.bytesDownloaded = totalBytesWritten
 			download.totalBytes = totalBytesExpectedToWrite
+			
+			if download.autoInstall {
+				OneTapInstaller.shared.updateDownload(written: totalBytesWritten, total: totalBytesExpectedToWrite)
+			}
 			
 			#if !targetEnvironment(macCatalyst)
 			if #available(iOS 26.0, *) {
@@ -284,10 +310,39 @@ extension DownloadManager: URLSessionDownloadDelegate {
 		}
 		
 		DispatchQueue.main.async {
+			// One-tap downloads survive a flaky connection: a dropped or timed-out transfer is
+			// retried automatically (resuming from what was already saved) instead of leaving
+			// the person looking at a frozen spinner.
+			let nsError = error as NSError
+			let isCancelled = nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+			
+			if
+				download.autoInstall,
+				!isCancelled,
+				download.retryCount < 4,
+				self.getDownloadIndex(by: download.id) != nil
+			{
+				download.retryCount += 1
+				download.resumeData = nsError.userInfo[NSURLSessionDownloadTaskResumeData] as? Data
+				
+				DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+					// the person may have cancelled while we were waiting
+					guard self.getDownloadIndex(by: download.id) != nil else { return }
+					self.resumeDownload(download)
+				}
+				return
+			}
+			
 			if let index = self.getDownloadIndex(by: download.id) {
 				self.downloads.remove(at: index)
 			}
-			if download.autoInstall { OneTapInstaller.shared.fail(error.localizedDescription) }
+			
+			if download.autoInstall {
+				let message: String = (nsError.domain == NSURLErrorDomain && !isCancelled)
+					? String.localized("Download interrupted. Check your connection and try again.")
+					: error.localizedDescription
+				OneTapInstaller.shared.fail(message)
+			}
 		}
 	}
 	

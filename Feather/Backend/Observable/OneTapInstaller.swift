@@ -23,6 +23,7 @@ final class OneTapInstaller: ObservableObject {
 	enum Phase: Equatable {
 		case idle
 		case downloading(String)
+		case preparing(String)
 		case signing(String)
 		case ready(String)
 		case failed(String)
@@ -31,6 +32,18 @@ final class OneTapInstaller: ObservableObject {
 	@Published private(set) var phase: Phase = .idle
 	/// Presented as the install sheet by the root view once signing is done.
 	@Published var installApp: AnyApp?
+	/// 0...1 while the IPA downloads, plus a "12 MB / 32 MB · 3 MB/s" line for the toast.
+	@Published private(set) var downloadFraction: Double = 0
+	@Published private(set) var downloadDetail: String = ""
+
+	private var _lastSample: (date: Date, bytes: Int64)?
+	private var _bytesPerSecond: Double = 0
+	private var _lastPublish = Date.distantPast
+	private static let _byteFormatter: ByteCountFormatter = {
+		let formatter = ByteCountFormatter()
+		formatter.countStyle = .file
+		return formatter
+	}()
 
 	private var _hideItem: DispatchWorkItem?
 
@@ -45,6 +58,7 @@ final class OneTapInstaller: ObservableObject {
 			_set(.failed(.localized("Add a certificate first. The app will be saved in the Library.")), hideAfter: 5)
 			return false
 		}
+		_resetDownloadStats()
 		_set(.downloading(name))
 		return true
 	}
@@ -56,6 +70,53 @@ final class OneTapInstaller: ObservableObject {
 	func fail(_ message: String) {
 		_stopBackgroundKeepAlive()
 		_set(.failed(message), hideAfter: 6)
+	}
+
+	/// Called on the main thread while the IPA is downloading.
+	func updateDownload(written: Int64, total: Int64) {
+		let now = Date()
+
+		if let last = _lastSample {
+			let elapsed = now.timeIntervalSince(last.date)
+			if elapsed >= 0.7 {
+				let current = max(0, Double(written - last.bytes) / elapsed)
+				_bytesPerSecond = _bytesPerSecond > 0 ? (_bytesPerSecond * 0.6 + current * 0.4) : current
+				_lastSample = (now, written)
+			}
+		} else {
+			_lastSample = (now, written)
+		}
+
+		// don't re-render the toast for every single chunk
+		guard now.timeIntervalSince(_lastPublish) >= 0.2 || (total > 0 && written >= total) else { return }
+		_lastPublish = now
+
+		let formatter = Self._byteFormatter
+		var detail = formatter.string(fromByteCount: written)
+		if total > 0 {
+			detail = "\(detail) / \(formatter.string(fromByteCount: total))"
+		}
+		if _bytesPerSecond > 1 {
+			detail += " · \(formatter.string(fromByteCount: Int64(_bytesPerSecond)))/s"
+		}
+
+		downloadFraction = total > 0 ? min(1, max(0, Double(written) / Double(total))) : 0
+		downloadDetail = detail
+	}
+
+	/// The IPA is fully downloaded; it is now being unpacked into the Library.
+	func markPreparing() {
+		if case .downloading(let name) = phase {
+			_set(.preparing(name))
+		}
+	}
+
+	private func _resetDownloadStats() {
+		downloadFraction = 0
+		downloadDetail = ""
+		_lastSample = nil
+		_bytesPerSecond = 0
+		_lastPublish = .distantPast
 	}
 
 	/// Called by `DownloadManager` when the IPA has been unpacked into the Library.
@@ -235,6 +296,8 @@ struct OneTapToastView: View {
 			return nil
 		case .downloading(let name):
 			return (String.localized("Downloading %@", arguments: name), nil, true)
+		case .preparing(let name):
+			return (String.localized("Preparing %@", arguments: name), nil, true)
 		case .signing(let name):
 			return (String.localized("Signing %@", arguments: name), nil, true)
 		case .ready(let name):
@@ -244,18 +307,35 @@ struct OneTapToastView: View {
 		}
 	}
 
+	private var _isDownloading: Bool {
+		if case .downloading = _installer.phase { return true }
+		return false
+	}
+
 	var body: some View {
 		ZStack {
 			if let content = _content {
 				HStack(spacing: 12) {
-					Text(content.text)
-						.font(.subheadline.weight(.semibold))
-						.lineLimit(1)
-						.truncationMode(.tail)
+					VStack(alignment: .leading, spacing: 2) {
+						Text(content.text)
+							.font(.subheadline.weight(.semibold))
+							.lineLimit(1)
+							.truncationMode(.tail)
+
+						if _isDownloading, !_installer.downloadDetail.isEmpty {
+							Text(_installer.downloadDetail)
+								.font(.caption)
+								.foregroundStyle(.secondary)
+								.lineLimit(1)
+						}
+					}
 
 					Spacer(minLength: 8)
 
-					if content.isBusy {
+					if _isDownloading, _installer.downloadFraction > 0 {
+						ProgressView(value: _installer.downloadFraction)
+							.progressViewStyle(.circular)
+					} else if content.isBusy {
 						ProgressView()
 					} else if let icon = content.icon {
 						Image(systemName: icon)

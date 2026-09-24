@@ -79,6 +79,9 @@ struct FeatherApp: App {
 			}
 			// pull the latest platform notifications on launch and every time the app returns to the foreground
 			.task {
+				// first launch: ask for permission right away (Allow / Don't Allow);
+				// otherwise it can still be enabled later from Profile > Notifications
+				Task { await AppNotificationCenter.shared.requestAuthorizationIfNeeded() }
 				await AppNotificationCenter.shared.refresh()
 			}
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in

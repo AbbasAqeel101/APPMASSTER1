@@ -2,9 +2,11 @@
 //  NotificationsView.swift
 //  AppMaster
 //
-//  Notifications inbox (opened from the bell button and from Profile >
-//  Notifications). Lists what was published from the platform, with a small
-//  section to allow iOS notifications / the app icon badge.
+//  Two screens share this view:
+//   - .inbox    : opened from the bell button. Lists what was published from the
+//                 platform; the unread number lives on the bell only.
+//   - .settings : Profile > Notifications. Just the switch that allows iOS
+//                 notifications, nothing else.
 //
 
 import SwiftUI
@@ -47,7 +49,7 @@ struct NotificationsSheetView: View {
 
 	var body: some View {
 		NBNavigationView(.localized("Notifications")) {
-			NotificationsView()
+			NotificationsView(mode: .inbox)
 				.toolbar {
 					ToolbarItem(placement: .topBarTrailing) {
 						Button(.localized("Done")) { dismiss() }
@@ -59,49 +61,65 @@ struct NotificationsSheetView: View {
 
 // MARK: - View
 struct NotificationsView: View {
+	enum Mode {
+		case inbox
+		case settings
+	}
+
+	let mode: Mode
+
 	@ObservedObject private var _center = AppNotificationCenter.shared
 	@Environment(\.scenePhase) private var _scenePhase
-	@State private var _status: UNAuthorizationStatus = .notDetermined
-	// Real permission status isn't known yet on first render (fetched
-	// asynchronously). Keep the "Enable Notifications" button hidden
-	// until that check finishes, otherwise it flashes for a frame every
-	// time this screen opens — even after permission was already granted.
-	@State private var _hasCheckedStatus = false
+	// Last known permission (cached) so the switch never flashes the wrong state
+	// while the real status is being fetched.
+	@State private var _status: UNAuthorizationStatus = AppNotificationCenter.cachedAuthorizationStatus
 
-	private var _statusText: String {
+	init(mode: Mode = .inbox) {
+		self.mode = mode
+	}
+
+	private var _isEnabled: Bool {
 		switch _status {
 		case .authorized, .provisional, .ephemeral:
-			return .localized("Enabled")
-		case .denied:
-			return .localized("Disabled")
+			return true
 		default:
-			return .localized("Not enabled yet")
+			return false
 		}
 	}
 
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("Notifications")) {
-			_permission()
-			_inbox()
+			if mode == .settings {
+				_permission()
+			} else {
+				_inbox()
+			}
 		}
 		.overlay {
-			if _center.items.isEmpty && !_center.isLoading {
+			if mode == .inbox && _center.items.isEmpty && !_center.isLoading {
 				Text(.localized("No notifications yet"))
 					.foregroundStyle(.secondary)
 					.padding(.top, 120)
 			}
 		}
 		.refreshable {
-			await _center.refresh()
+			if mode == .inbox {
+				await _center.refresh()
+			}
 		}
 		.task {
-			await _center.refresh()
+			if mode == .inbox {
+				await _center.refresh()
+			}
 			await _refreshStatus()
 		}
 		.onDisappear {
-			Task { @MainActor in
-				_center.markAllRead()
+			// only opening the inbox counts as reading the notifications
+			if mode == .inbox {
+				Task { @MainActor in
+					_center.markAllRead()
+				}
 			}
 		}
 		.onChange(of: _scenePhase) { phase in
@@ -117,24 +135,11 @@ extension NotificationsView {
 	@ViewBuilder
 	private func _permission() -> some View {
 		Section {
-			HStack {
+			Toggle(isOn: _enabledBinding) {
 				Label(.localized("Alerts & Badge"), systemImage: "bell.badge")
-				Spacer()
-				Text(_statusText)
-					.foregroundStyle(.secondary)
-			}
-
-			if _hasCheckedStatus && _status == .notDetermined {
-				Button(.localized("Enable Notifications")) {
-					_request()
-				}
-			} else if _hasCheckedStatus && _status == .denied {
-				Button(.localized("Open iOS Settings")) {
-					_openSettings()
-				}
 			}
 		} footer: {
-			Text(.localized("New notifications from AppMaster appear here and as a number on the app icon."))
+			Text(.localized("Enable notifications to receive updates"))
 		}
 	}
 
@@ -178,10 +183,24 @@ extension NotificationsView {
 
 // MARK: - Actions
 extension NotificationsView {
+	private var _enabledBinding: Binding<Bool> {
+		Binding(
+			get: { _isEnabled },
+			set: { wantsOn in
+				if wantsOn && _status == .notDetermined {
+					_request()
+				} else {
+					// once decided, iOS only lets the person change it from system Settings
+					_openSettings()
+				}
+			}
+		)
+	}
+
 	private func _refreshStatus() async {
 		let settings = await UNUserNotificationCenter.current().notificationSettings()
 		_status = settings.authorizationStatus
-		_hasCheckedStatus = true
+		UserDefaults.standard.set(settings.authorizationStatus.rawValue, forKey: AppNotificationCenter.authorizationStatusKey)
 	}
 
 	private func _request() {

@@ -30,6 +30,29 @@ final class AppNotificationCenter: ObservableObject {
 
 	private let _seenKey = "AppMaster.seenNotificationIDs"
 
+	static let authorizationStatusKey = "AppMaster.notificationAuthorizationStatus"
+
+	/// Last known iOS notification permission, cached so Settings can show it instantly
+	/// (no flash of the wrong state while the real status is being fetched).
+	static var cachedAuthorizationStatus: UNAuthorizationStatus {
+		UNAuthorizationStatus(rawValue: UserDefaults.standard.integer(forKey: authorizationStatusKey)) ?? .notDetermined
+	}
+
+	/// Shows the system Allow / Don't Allow prompt the first time only.
+	@MainActor
+	func requestAuthorizationIfNeeded() async {
+		let center = UNUserNotificationCenter.current()
+		var settings = await center.notificationSettings()
+
+		if settings.authorizationStatus == .notDetermined {
+			_ = try? await center.requestAuthorization(options: [.alert, .badge, .sound])
+			settings = await center.notificationSettings()
+		}
+
+		UserDefaults.standard.set(settings.authorizationStatus.rawValue, forKey: Self.authorizationStatusKey)
+		_updateUnread()
+	}
+
 	private var _seenIDs: Set<String> {
 		get { Set(UserDefaults.standard.stringArray(forKey: _seenKey) ?? []) }
 		set { UserDefaults.standard.set(Array(newValue), forKey: _seenKey) }
