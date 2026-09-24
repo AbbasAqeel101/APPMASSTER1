@@ -79,6 +79,7 @@ struct NotificationsView: View {
 	}
 
 	private var _isEnabled: Bool {
+		guard _center.wantsNotifications else { return false }
 		switch _status {
 		case .authorized, .provisional, .ephemeral:
 			return true
@@ -187,10 +188,20 @@ extension NotificationsView {
 		Binding(
 			get: { _isEnabled },
 			set: { wantsOn in
-				if wantsOn && _status == .notDetermined {
+				// turning OFF is always our own choice — never needs system Settings
+				guard wantsOn else {
+					Task { @MainActor in _center.setWantsNotifications(false) }
+					return
+				}
+
+				switch _status {
+				case .notDetermined:
 					_request()
-				} else {
-					// once decided, iOS only lets the person change it from system Settings
+				case .authorized, .provisional, .ephemeral:
+					// iOS permission is already granted, so just turn our own switch back on
+					Task { @MainActor in _center.setWantsNotifications(true) }
+				default:
+					// denied: only the person can undo that from system Settings, iOS gives no other way
 					_openSettings()
 				}
 			}
@@ -204,8 +215,13 @@ extension NotificationsView {
 	}
 
 	private func _request() {
-		UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in
-			Task { await _refreshStatus() }
+		UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+			Task {
+				await _refreshStatus()
+				if granted {
+					await _center.setWantsNotifications(true)
+				}
+			}
 		}
 	}
 

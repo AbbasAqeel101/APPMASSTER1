@@ -31,11 +31,26 @@ final class AppNotificationCenter: ObservableObject {
 	private let _seenKey = "AppMaster.seenNotificationIDs"
 
 	static let authorizationStatusKey = "AppMaster.notificationAuthorizationStatus"
+	static let wantsNotificationsKey = "AppMaster.notificationsWantedLocally"
 
 	/// Last known iOS notification permission, cached so Settings can show it instantly
 	/// (no flash of the wrong state while the real status is being fetched).
 	static var cachedAuthorizationStatus: UNAuthorizationStatus {
 		UNAuthorizationStatus(rawValue: UserDefaults.standard.integer(forKey: authorizationStatusKey)) ?? .notDetermined
+	}
+
+	/// The person's own choice, on top of the iOS permission. iOS lets an app
+	/// turn this OFF instantly, but once denied only the person can turn it
+	/// back ON again from system Settings — that half of the switch can't be
+	/// done in-app, it's an iOS restriction, not something this app controls.
+	@Published private(set) var wantsNotifications: Bool =
+		(UserDefaults.standard.object(forKey: AppNotificationCenter.wantsNotificationsKey) as? Bool) ?? true
+
+	@MainActor
+	func setWantsNotifications(_ on: Bool) {
+		wantsNotifications = on
+		UserDefaults.standard.set(on, forKey: Self.wantsNotificationsKey)
+		_updateUnread()
 	}
 
 	/// Shows the system Allow / Don't Allow prompt the first time only.
@@ -127,7 +142,7 @@ final class AppNotificationCenter: ObservableObject {
 			if !seen.contains(item.id) { count += 1 }
 		}
 		unreadCount = count
-		UNUserNotificationCenter.current().setBadgeCount(count) { _ in }
+		UNUserNotificationCenter.current().setBadgeCount(wantsNotifications ? count : 0) { _ in }
 	}
 
 	private static func _parseDate(_ string: String?) -> Date? {

@@ -23,13 +23,23 @@ struct CatalogSearchView: View {
 
 	private var _results: [CatalogEntry] {
 		let all = CompanyCatalog.entries(sources: Array(_sources), viewModel: viewModel)
-		let query = _searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+		let query = CatalogSearchMatching.normalize(_searchText)
 		if query.isEmpty { return all }
 
 		return all.filter { entry in
-			if entry.app.currentName.localizedCaseInsensitiveContains(query) { return true }
-			if entry.category.localizedCaseInsensitiveContains(query) { return true }
-			if let text = entry.app.currentDescription, text.localizedCaseInsensitiveContains(query) { return true }
+			if CatalogSearchMatching.fuzzyContains(query: query, in: CatalogSearchMatching.normalize(entry.app.currentName)) {
+				return true
+			}
+			if CatalogSearchMatching.fuzzyContains(query: query, in: CatalogSearchMatching.normalize(entry.category)) {
+				return true
+			}
+			if let text = entry.app.currentDescription,
+			   CatalogSearchMatching.fuzzyContains(query: query, in: CatalogSearchMatching.normalize(text)) {
+				return true
+			}
+			if CatalogSearchMatching.matchesSynonym(query: query, appName: entry.app.currentName) {
+				return true
+			}
 			return false
 		}
 	}
