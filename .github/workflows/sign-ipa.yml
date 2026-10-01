@@ -1,0 +1,153 @@
+name: Sign IPA
+
+# Triggered by the Supabase Edge Function `sign-ipa` (repository_dispatch).
+# The dispatch payload carries ONLY a random single-use job id.
+# The certificate / password are fetched at run time from Supabase, using a
+# GitHub OIDC token (no long-lived secret is stored in this repository), and
+# every sensitive value is masked in the logs.
+
+on:
+  repository_dispatch:
+    types: [sign-ipa]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FUNCTION_URL: https://seemtaruyoixqdfdqwfv.supabase.co/functions/v1/sign-ipa
+  ZSIGN_COMMIT: 614caa8d1ca949e260e5746144aa52d27a4b08d6
+  IPA_NAME: AppMaster.ipa
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate job id
+        env:
+          JOB_ID: ${{ github.event.client_payload.job_id }}
+        run: |
+          if ! [[ "$JOB_ID" =~ ^[a-f0-9]{32}$ ]]; then
+            echo "Invalid job id"; exit 1
+          fi
+
+      - name: Cache zsign
+        id: zcache
+        uses: actions/cache@v4
+        with:
+          path: ~/zsign-bin
+          key: zsign-${{ env.ZSIGN_COMMIT }}-${{ runner.os }}
+
+      - name: Build zsign
+        if: steps.zcache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ pkg-config libssl-dev
+          git clone https://github.com/zhlynn/zsign.git /tmp/zsign
+          git -C /tmp/zsign checkout "$ZSIGN_COMMIT"
+          make -C /tmp/zsign/build/linux -j4
+          mkdir -p ~/zsign-bin
+          cp /tmp/zsign/bin/zsign ~/zsign-bin/zsign
+
+      - name: Sign
+        env:
+          JOB_ID: ${{ github.event.client_payload.job_id }}
+        run: |
+          set -Eeuo pipefail
+          WORK="$RUNNER_TEMP/sign"; mkdir -p "$WORK"; cd "$WORK"
+          STAGE="auth"
+
+          # --- OIDC token proving this run belongs to this repo/workflow ---
+          OIDC=$(curl -fsS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                 "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=appmaster-sign" | jq -r .value)
+          echo "::add-mask::$OIDC"
+
+          call() { # call <json>
+            curl -fsS -X POST "$FUNCTION_URL" \
+              -H "Authorization: Bearer $OIDC" -H "Content-Type: application/json" -d "$1"
+          }
+          fail() { # fail <message>
+            call "$(jq -n --arg j "$JOB_ID" --arg m "$1" '{action:"complete",job_id:$j,ok:false,message:$m}')" >/dev/null || true
+          }
+          trap 'R=$(cat reason.txt 2>/dev/null || true); fail "فشل التوقيع في مرحلة: $STAGE $R"' ERR
+
+          # --- 1) fetch certificate material (single use) ---
+          STAGE="fetch-certificate"
+          call "$(jq -n --arg j "$JOB_ID" '{action:"fetch",job_id:$j}')" > job.json
+          PW=$(jq -r .p12_password job.json);        echo "::add-mask::$PW"
+          UP=$(jq -r .upload_url job.json);          echo "::add-mask::$UP"
+          UDID=$(jq -r .udid job.json);              echo "::add-mask::$UDID"
+          jq -r .p12_b64 job.json | base64 -d > cert.p12
+          jq -r .mobileprovision_b64 job.json | base64 -d > prov.mobileprovision
+          rm -f job.json
+
+          # --- 2) download the latest published IPA ---
+          STAGE="download-ipa"
+          curl -fsSL "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/$IPA_NAME" -o app.ipa
+          unzip -tq app.ipa >/dev/null
+
+          # --- 3) read bundle id / version from the IPA ---
+          STAGE="read-ipa"
+          unzip -p app.ipa 'Payload/*.app/Info.plist' > Info.plist
+          BUNDLE=$(python3 -c "import plistlib;print(plistlib.load(open('Info.plist','rb'))['CFBundleIdentifier'])")
+          VERSION=$(python3 -c "import plistlib;print(plistlib.load(open('Info.plist','rb')).get('CFBundleShortVersionString',''))")
+
+          # --- 4) check the provisioning profile (expiry, device, App ID) ---
+          STAGE="check-profile"
+          openssl smime -inform der -verify -noverify -in prov.mobileprovision -out prov.plist >/dev/null 2>&1
+          BARGS=$(UDID="$UDID" BUNDLE="$BUNDLE" python3 - <<'PY'
+          import os, plistlib, datetime, sys
+          p = plistlib.load(open('prov.plist','rb'))
+          udid, bundle = os.environ['UDID'], os.environ['BUNDLE']
+          exp = p.get('ExpirationDate')
+          def die(r):
+              open('reason.txt','w').write('(' + r + ')'); sys.exit(1)
+          if exp and exp.replace(tzinfo=None) < datetime.datetime.utcnow():
+              die('profile-expired')
+          devices = p.get('ProvisionedDevices')
+          if devices is not None and not p.get('ProvisionsAllDevices') and udid not in devices:
+              die('udid-not-in-profile')
+          ent = p.get('Entitlements', {})
+          appid = ent.get('application-identifier', '')
+          prefix = (p.get('ApplicationIdentifierPrefix') or [''])[0]
+          pattern = appid[len(prefix)+1:] if prefix and appid.startswith(prefix + '.') else appid
+          new = ''
+          if pattern in ('*', ''):
+              pass
+          elif pattern.endswith('.*'):
+              base = pattern[:-1]            # keep trailing dot
+              if not bundle.startswith(base):
+                  new = base + 'appmaster'
+          elif pattern != bundle:
+              new = pattern
+          print(f"-b {new}" if new else '')
+          PY
+          )
+          FINAL_BUNDLE="$BUNDLE"
+          if [ -n "$BARGS" ]; then FINAL_BUNDLE="${BARGS#-b }"; fi
+
+          # --- 5) sign ---
+          STAGE="zsign"
+          if [ -n "$BARGS" ]; then
+            ~/zsign-bin/zsign -q -k cert.p12 -p "$PW" -m prov.mobileprovision -b "$FINAL_BUNDLE" -z 6 -o signed.ipa app.ipa > zsign.log 2>&1 \
+              || { tail -n 5 zsign.log | sed 's/[0-9A-F]\{20,\}/***/g'; exit 1; }
+          else
+            ~/zsign-bin/zsign -q -k cert.p12 -p "$PW" -m prov.mobileprovision -z 6 -o signed.ipa app.ipa > zsign.log 2>&1 \
+              || { tail -n 5 zsign.log | sed 's/[0-9A-F]\{20,\}/***/g'; exit 1; }
+          fi
+          unzip -tq signed.ipa >/dev/null
+          [ "$(stat -c %s signed.ipa)" -gt 1000000 ]
+
+          # --- 6) upload the signed IPA (short-lived, auto-deleted) ---
+          STAGE="upload"
+          curl -fsS -X PUT -H "Content-Type: application/octet-stream" --data-binary @signed.ipa "$UP" >/dev/null
+
+          # --- 7) report success ---
+          STAGE="complete"
+          call "$(jq -n --arg j "$JOB_ID" --arg b "$FINAL_BUNDLE" --arg v "$VERSION" \
+                 '{action:"complete",job_id:$j,ok:true,bundle_id:$b,version:$v}')" >/dev/null
+
+      - name: Wipe sensitive files
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/sign" ~/.zsign_cache || true
