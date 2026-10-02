@@ -4,9 +4,12 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -15,7 +18,7 @@ jobs:
           ref: main
 
       - name: Dependencies
-        run: brew install jq
+        run: sudo apt-get install -y -qq jq
 
       - name: Update app-repo.json
         run: |
