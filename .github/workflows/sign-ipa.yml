@@ -96,46 +96,26 @@ jobs:
           # --- 4) check the provisioning profile (expiry, device, App ID) ---
           STAGE="check-profile"
           openssl smime -inform der -verify -noverify -in prov.mobileprovision -out prov.plist >/dev/null 2>&1
-          BARGS=$(UDID="$UDID" BUNDLE="$BUNDLE" python3 - <<'PY'
+          UDID="$UDID" python3 - <<'PY'
           import os, plistlib, datetime, sys
           p = plistlib.load(open('prov.plist','rb'))
-          udid, bundle = os.environ['UDID'], os.environ['BUNDLE']
-          exp = p.get('ExpirationDate')
+          udid = os.environ['UDID']
           def die(r):
               open('reason.txt','w').write('(' + r + ')'); sys.exit(1)
+          exp = p.get('ExpirationDate')
           if exp and exp.replace(tzinfo=None) < datetime.datetime.utcnow():
               die('profile-expired')
           devices = p.get('ProvisionedDevices')
           if devices is not None and not p.get('ProvisionsAllDevices') and udid not in devices:
               die('udid-not-in-profile')
-          ent = p.get('Entitlements', {})
-          appid = ent.get('application-identifier', '')
-          prefix = (p.get('ApplicationIdentifierPrefix') or [''])[0]
-          pattern = appid[len(prefix)+1:] if prefix and appid.startswith(prefix + '.') else appid
-          new = ''
-          if pattern in ('*', ''):
-              pass
-          elif pattern.endswith('.*'):
-              base = pattern[:-1]            # keep trailing dot
-              if not bundle.startswith(base):
-                  new = base + 'appmaster'
-          elif pattern != bundle:
-              new = pattern
-          print(f"-b {new}" if new else '')
           PY
-          )
+          # كل تطبيق يحتفظ بمعرّف الحزمة (Bundle ID) الخاص به: لا نغيّره أبدًا
           FINAL_BUNDLE="$BUNDLE"
-          if [ -n "$BARGS" ]; then FINAL_BUNDLE="${BARGS#-b }"; fi
 
           # --- 5) sign ---
           STAGE="zsign"
-          if [ -n "$BARGS" ]; then
-            ~/zsign-bin/zsign -q -k cert.p12 -p "$PW" -m prov.mobileprovision -b "$FINAL_BUNDLE" -z 6 -o signed.ipa app.ipa > zsign.log 2>&1 \
-              || { tail -n 5 zsign.log | sed 's/[0-9A-F]\{20,\}/***/g'; exit 1; }
-          else
-            ~/zsign-bin/zsign -q -k cert.p12 -p "$PW" -m prov.mobileprovision -z 6 -o signed.ipa app.ipa > zsign.log 2>&1 \
-              || { tail -n 5 zsign.log | sed 's/[0-9A-F]\{20,\}/***/g'; exit 1; }
-          fi
+          ~/zsign-bin/zsign -q -k cert.p12 -p "$PW" -m prov.mobileprovision -z 6 -o signed.ipa app.ipa > zsign.log 2>&1 \
+            || { tail -n 5 zsign.log | sed 's/[0-9A-F]\{20,\}/***/g'; exit 1; }
           unzip -tq signed.ipa >/dev/null
           [ "$(stat -c %s signed.ipa)" -gt 1000000 ]
 
