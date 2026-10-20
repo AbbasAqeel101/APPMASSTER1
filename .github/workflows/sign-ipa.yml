@@ -12,8 +12,11 @@ on:
   repository_dispatch:
     types: [sign-ipa]
 
+# v37: contents: write is needed to publish the signed copy as a temporary Release
+# (and to delete releases older than 24 hours). Releases created with the default
+# GITHUB_TOKEN do not trigger other workflows.
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 env:
@@ -55,6 +58,8 @@ jobs:
       - name: Sign
         env:
           JOB_ID: ${{ github.event.client_payload.job_id }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -Eeuo pipefail
           WORK="$RUNNER_TEMP/sign"; mkdir -p "$WORK"; cd "$WORK"
@@ -76,9 +81,8 @@ jobs:
 
           # --- 1) fetch certificate material (single use) ---
           STAGE="fetch-certificate"
-          call "$(jq -n --arg j "$JOB_ID" '{action:"fetch",job_id:$j}')" > job.json
+          call "$(jq -n --arg j "$JOB_ID" '{action:"fetch",job_id:$j,mode:"release"}')" > job.json
           PW=$(jq -r .p12_password job.json);        echo "::add-mask::$PW"
-          UP=$(jq -r .upload_url job.json);          echo "::add-mask::$UP"
           UDID=$(jq -r '.udid // ""' job.json);      [ -n "$UDID" ] && echo "::add-mask::$UDID" || true
           jq -r .p12_b64 job.json | base64 -d > cert.p12
           jq -r .mobileprovision_b64 job.json | base64 -d > prov.mobileprovision
@@ -127,16 +131,30 @@ jobs:
           unzip -tq signed.ipa >/dev/null
           [ "$(stat -c %s signed.ipa)" -gt 1000000 ]
 
-          # --- 6) upload the signed IPA (short-lived, auto-deleted) ---
+          # --- 6) publish the signed IPA as a temporary Release (s-<jobid>, deleted after 24 h) ---
+          # prerelease + not "latest": the real AppMaster release stays the one at /releases/latest
           STAGE="upload"
-          curl -fsS -X PUT -H "Content-Type: application/octet-stream" --data-binary @signed.ipa "$UP" >/dev/null
+          cp signed.ipa AppMaster.ipa
+          gh release create "s-$JOB_ID" AppMaster.ipa --prerelease --latest=false \
+            --title "temporary signed copy" --notes "auto-deleted after 24 hours" >/dev/null
 
           # --- 7) report success ---
           STAGE="complete"
           call "$(jq -n --arg j "$JOB_ID" --arg b "$FINAL_BUNDLE" --arg v "$VERSION" --arg t "$RELEASE_TAG" \
                  --slurpfile d devices.json \
-                 '{action:"complete",job_id:$j,ok:true,bundle_id:$b,version:$v,release_tag:$t,devices:$d[0]}')" >/dev/null
+                 '{action:"complete",job_id:$j,mode:"release",ok:true,bundle_id:$b,version:$v,release_tag:$t,devices:$d[0]}')" >/dev/null
 
       - name: Wipe sensitive files
         if: always()
         run: rm -rf "$RUNNER_TEMP/sign" ~/.zsign_cache || true
+
+      # delete temporary signed releases older than 24 hours (also covers orphans of failed runs)
+      - name: Delete old temporary releases
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release list --limit 300 --json tagName,createdAt \
+            --jq '.[] | select(.tagName | startswith("s-")) | select((.createdAt | fromdateiso8601) < (now - 86400)) | .tagName' \
+            | while read -r t; do gh release delete "$t" --cleanup-tag --yes || true; done || true
