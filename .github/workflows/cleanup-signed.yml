@@ -1,0 +1,34 @@
+name: Cleanup signed copies
+
+# Deletes temporary signed releases (tag s-*) older than 24 hours.
+# Runs every hour by itself, so copies are removed even when nobody installs anything.
+# Can also be started manually from the Actions tab (Run workflow).
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cleanup-signed
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete temporary releases older than 24 hours
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release list --limit 300 --json tagName,createdAt \
+            --jq '.[] | select(.tagName | startswith("s-")) | select((.createdAt | fromdateiso8601) < (now - 86400)) | .tagName' \
+            | while read -r t; do
+                echo "deleting $t"
+                gh release delete "$t" --cleanup-tag --yes
+              done
