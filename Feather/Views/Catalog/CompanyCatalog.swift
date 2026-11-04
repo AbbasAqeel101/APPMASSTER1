@@ -66,22 +66,31 @@ enum CompanyCatalog {
 
 	static func entries(of kind: Kind, from all: [CatalogEntry]) -> [CatalogEntry] {
 		all.filter { entry in
-			let isGame = isGameCategory(entry.category)
+			let isGame: Bool
+			if let section = entry.app.section?.lowercased(), !section.isEmpty {
+				isGame = section == "games"
+			} else {
+				isGame = isGameCategory(entry.category)
+			}
 			return kind == .games ? isGame : !isGame
 		}
 	}
 
 	/// Distinct, non-empty categories in the order the catalog lists them.
 	static func categories(in entries: [CatalogEntry]) -> [String] {
-		var seen = Set<String>()
-		var ordered: [String] = []
+		var present = Set<String>()
+		var firstSeen: [String] = []
 		for entry in entries {
 			let name = entry.category
-			if name.isEmpty || seen.contains(name) { continue }
-			seen.insert(name)
-			ordered.append(name)
+			if name.isEmpty || present.contains(name) { continue }
+			present.insert(name)
+			firstSeen.append(name)
 		}
-		return ordered
+		// the dashboard decides which categories get a chip, and their order
+		if let order = entries.first?.repository.categoryOrder {
+			return order.filter { present.contains($0) }
+		}
+		return firstSeen
 	}
 }
 

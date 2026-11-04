@@ -12,6 +12,7 @@
 import SwiftUI
 import UserNotifications
 import NimbleViews
+import NukeUI
 
 // MARK: - Bell button (used in the toolbars of Home / Apps / Games)
 struct NotificationBellButton: View {
@@ -160,6 +161,20 @@ extension NotificationsView {
 				.fill(_center.isUnread(item) ? Color.accentColor : Color.clear)
 				.frame(width: 9, height: 9)
 				.padding(.top, 6)
+
+			if let iconURL = item.iconURL {
+				LazyImage(url: iconURL) { state in
+					if let image = state.image {
+						image
+							.resizable()
+							.aspectRatio(contentMode: .fill)
+					} else {
+						Color(.secondarySystemFill)
+					}
+				}
+				.frame(width: 44, height: 44)
+				.clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+			}
 
 			VStack(alignment: .leading, spacing: 4) {
 				Text(item.title)

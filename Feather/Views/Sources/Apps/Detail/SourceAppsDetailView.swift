@@ -52,10 +52,6 @@ struct SourceAppsDetailView: View {
 							.font(.title2)
 							.fontWeight(.semibold)
 							.foregroundColor(.primary)
-						Text(app.currentDescription ?? .localized("An awesome application"))
-							.font(.subheadline)
-							.foregroundColor(.secondary)
-						
 						Spacer()
 						
 						DownloadButtonView(sourceURL: sourceURL, source: source, app: app)
@@ -130,7 +126,7 @@ struct SourceAppsDetailView: View {
 							_infoRow(title: .localized("Size"), value: size.formattedByteCount)
 						}
 						
-						if let category = app.category {
+						if let category = app.category, !category.isEmpty {
 							_infoRow(title: .localized("Category"), value: category.capitalized)
 						}
 						

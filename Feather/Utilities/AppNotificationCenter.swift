@@ -18,6 +18,7 @@ struct AppNotificationItem: Identifiable, Hashable {
 	let title: String
 	let body: String?
 	let date: Date?
+	let iconURL: URL?
 }
 
 // MARK: - Center
@@ -122,7 +123,8 @@ final class AppNotificationCenter: ObservableObject {
 						id: id,
 						title: title,
 						body: row["body"] as? String,
-						date: Self._parseDate(row["created_at"] as? String)
+						date: Self._parseDate(row["created_at"] as? String),
+						iconURL: (row["icon_url"] as? String).flatMap { URL(string: $0) }
 					)
 				)
 			}

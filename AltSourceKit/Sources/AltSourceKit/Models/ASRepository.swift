@@ -35,6 +35,7 @@ public struct ASRepository: Sendable, Decodable, Hashable, Identifiable {
 	public var apps: [App]
 	public var featuredApps: [App.ID]?
 	public var news: [News]?
+	public var categoryOrder: [String]?
 
 	public init(from decoder: any Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -97,6 +98,7 @@ public struct ASRepository: Sendable, Decodable, Hashable, Identifiable {
 		self.featuredApps =
 			try container.decodeIfPresent([App.ID].self, forKey: .featuredApps) ?? []
 		self.news = try container.decodeIfPresent([News].self, forKey: .news) ?? []
+		self.categoryOrder = try? container.decodeIfPresent([String].self, forKey: .categoryOrder)
 	}
 
 	public enum CodingKeys: String, CodingKey {
@@ -112,7 +114,8 @@ public struct ASRepository: Sendable, Decodable, Hashable, Identifiable {
 		     tintColor,
 		     apps,
 		     featuredApps,
-		     news
+		     news,
+		     categoryOrder
 	}
 	
 	public var currentIconURL: URL? {
@@ -172,6 +175,8 @@ extension ASRepository {
 		public var size: Int64?
 
 		public var category: String?
+
+		public var section: String?
 
 		public var beta: Bool?
 
@@ -273,6 +278,8 @@ extension ASRepository {
 				forKey: .category
 			)
 
+			self.section = try? container.decodeIfPresent(String.self, forKey: .section)
+
 			self.beta =
 				(try? container.decodeIfPresent(Bool.self, forKey: .beta)) ?? false
 
@@ -348,7 +355,7 @@ extension ASRepository {
 			case name, subtitle, description
 			case developer = "developerName"
 			case versions, version, versionDate, date, versionDescription, downloadURL,
-			     localizedDescription, iconURL, tintColor, size, category, beta
+			     localizedDescription, iconURL, tintColor, size, category, section, beta
 			case permissions, appPermissions
 			case screenshots, screenshotURLs
 			case marketplaceID

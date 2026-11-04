@@ -161,3 +161,104 @@ enum CatalogSearchMatching {
 		return false
 	}
 }
+
+// MARK: - Search index
+/// One catalog entry with its searchable text normalized once, up front, so
+/// typing in the search field never re-normalizes thousands of apps.
+struct CatalogSearchItem {
+	let entry: CatalogEntry
+	let name: String
+	let category: String
+	let description: String
+	let aliases: [String]
+}
+
+enum CatalogSearchIndex {
+	private static let _aliasTable: [(canonical: String, aliases: [String])] = [
+		("instagram", ["انستا", "انستغرام", "انستقرام", "insta"]),
+		("whatsapp", ["واتساب", "واتس اب", "واتس"]),
+		("snapchat", ["سناب شات", "سناب"]),
+		("tiktok", ["تيك توك", "تكتوك", "تيكتوك"]),
+		("youtube", ["يوتيوب"]),
+		("facebook", ["فيسبوك", "فيس بوك", "فيس"]),
+		("telegram", ["تليجرام", "تلغرام", "تيليجرام"]),
+		("twitter", ["تويتر", "اكس"]),
+		("pubg", ["ببجي", "بوبجي", "بب جي"]),
+		("canva", ["كانفا", "كانڤا"]),
+		("picsart", ["بيكس ارت", "بكسارت", "بيكسارت"]),
+		("netflix", ["نتفلكس", "نتفليكس"]),
+		("spotify", ["سبوتيفاي", "سبوتيفي"]),
+		("free fire", ["فري فاير"]),
+		("call of duty", ["كول اوف ديوتي", "كود موبايل", "كودم"]),
+		("minecraft", ["ماين كرافت", "ماينكرافت"]),
+		("roblox", ["روبلكس", "روبولوكس"])
+	]
+
+	private static let _normalizedAliasTable: [(canonical: String, aliases: [String])] = {
+		_aliasTable.map { row in
+			(CatalogSearchMatching.normalize(row.canonical), row.aliases.map { CatalogSearchMatching.normalize($0) })
+		}
+	}()
+
+	/// Runs off the main thread.
+	static func build(from entries: [CatalogEntry]) -> [CatalogSearchItem] {
+		var items: [CatalogSearchItem] = []
+		items.reserveCapacity(entries.count)
+
+		for entry in entries {
+			let name = CatalogSearchMatching.normalize(entry.app.currentName)
+
+			var aliases: [String] = []
+			for row in _normalizedAliasTable {
+				if name.contains(row.canonical) || (name.count >= 4 && row.canonical.contains(name)) {
+					aliases.append(row.canonical)
+					aliases.append(contentsOf: row.aliases)
+				}
+			}
+
+			var description = ""
+			if let text = entry.app.currentDescription {
+				description = CatalogSearchMatching.normalize(String(text.prefix(240)))
+			}
+
+			items.append(
+				CatalogSearchItem(
+					entry: entry,
+					name: name,
+					category: CatalogSearchMatching.normalize(entry.category),
+					description: description,
+					aliases: aliases
+				)
+			)
+		}
+		return items
+	}
+
+	/// Runs off the main thread. Name matches first (starts-with before the
+	/// rest), then category / alias / description matches.
+	static func search(_ rawQuery: String, in items: [CatalogSearchItem]) -> [CatalogEntry] {
+		let query = CatalogSearchMatching.normalize(rawQuery)
+		if query.isEmpty { return items.map(\.entry) }
+
+		var prefix: [CatalogEntry] = []
+		var nameHits: [CatalogEntry] = []
+		var otherHits: [CatalogEntry] = []
+
+		for item in items {
+			if Task.isCancelled { return [] }
+
+			if item.name.hasPrefix(query) {
+				prefix.append(item.entry)
+			} else if item.name.contains(query) {
+				nameHits.append(item.entry)
+			} else if item.category.contains(query)
+				|| item.aliases.contains(where: { $0.contains(query) })
+				|| (query.count >= 3 && item.description.contains(query)) {
+				otherHits.append(item.entry)
+			} else if query.count >= 3 && CatalogSearchMatching.fuzzyContains(query: query, in: item.name) {
+				otherHits.append(item.entry)
+			}
+		}
+		return prefix + nameHits + otherHits
+	}
+}

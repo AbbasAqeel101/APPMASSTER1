@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+import CryptoKit
 
 final class CertificateFileHandler: NSObject {
 	private let _fileManager = FileManager.default
@@ -53,16 +54,25 @@ final class CertificateFileHandler: NSObject {
 	}
 	
 	func addToDatabase() async throws {
-		
-		Storage.shared.addCertificate(
-			uuid: _uuid,
-			password: _keyPassword,
-			nickname: _certNickname,
-			ppq: _certPair?.PPQCheck ?? false,
-			expiration: _certPair?.ExpirationDate ?? Date(),
-			isDefault: _isDefault
-		) { _ in
-			Logger.misc.info("[\(self._uuid)] Added to database")
+		let uuid = _uuid
+		let password = _keyPassword
+		let nickname = _certNickname
+		let ppq = _certPair?.PPQCheck ?? false
+		let expiration = _certPair?.ExpirationDate ?? Date()
+		let isDefault = _isDefault
+
+		// Core Data's view context and the haptic generator must only be touched on the main thread
+		await MainActor.run {
+			Storage.shared.addCertificate(
+				uuid: uuid,
+				password: password,
+				nickname: nickname,
+				ppq: ppq,
+				expiration: expiration,
+				isDefault: isDefault
+			) { _ in
+				Logger.misc.info("[\(uuid)] Added to database")
+			}
 		}
 	}
 	
@@ -74,4 +84,68 @@ final class CertificateFileHandler: NSObject {
 
 private enum CertificateFileHandlerError: Error {
 	case certNotValid
+}
+
+// MARK: - Automatic certificate for subscribers
+/// A subscriber's AppMaster is signed with the subscriber's own certificate, so
+/// the provisioning profile embedded in the installed app identifies it. The
+/// platform returns that certificate and the app imports it by itself.
+enum AutoCertificateImporter {
+	private static let _endpoint = "https://seemtaruyoixqdfdqwfv.supabase.co/functions/v1/device-cert"
+	private static let _hashKey = "AppMaster.autoCertHash"
+
+	static func run() async {
+		guard
+			let profileURL = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+			let profileData = try? Data(contentsOf: profileURL),
+			let endpoint = URL(string: _endpoint)
+		else {
+			return
+		}
+
+		let hash = SHA256.hash(data: profileData).map { String(format: "%02x", $0) }.joined()
+		let hasCertificates = await MainActor.run { !Storage.shared.getAllCertificates().isEmpty }
+
+		if hasCertificates && UserDefaults.standard.string(forKey: _hashKey) == hash {
+			return
+		}
+
+		var request = URLRequest(url: endpoint)
+		request.httpMethod = "POST"
+		request.timeoutInterval = 25
+		request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+		request.httpBody = try? JSONSerialization.data(withJSONObject: ["profile_sha256": hash])
+
+		guard
+			let (data, response) = try? await URLSession.shared.data(for: request),
+			(response as? HTTPURLResponse)?.statusCode == 200,
+			let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+			let p12Base64 = json["p12"] as? String,
+			let provisionBase64 = json["mobileprovision"] as? String,
+			let password = json["password"] as? String,
+			let p12URL = FileManager.default.decodeAndWrite(base64: p12Base64, pathComponent: ".p12"),
+			let provisionURL = FileManager.default.decodeAndWrite(base64: provisionBase64, pathComponent: ".mobileprovision")
+		else {
+			return
+		}
+
+		let valid = FR.checkPasswordForCertificate(for: p12URL, with: password, using: provisionURL)
+		guard valid else { return }
+
+		let nickname = (json["name"] as? String) ?? ""
+		await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+			FR.handleCertificateFiles(
+				p12URL: p12URL,
+				provisionURL: provisionURL,
+				p12Password: password,
+				certificateName: nickname,
+				isDefault: true
+			) { error in
+				if error == nil {
+					UserDefaults.standard.set(hash, forKey: _hashKey)
+				}
+				continuation.resume()
+			}
+		}
+	}
 }

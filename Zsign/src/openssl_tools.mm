@@ -22,8 +22,13 @@
 using namespace std;
 
 bool p12_password_check(NSString *file, NSString *pass) {
-	const std::string strFile = [file cStringUsingEncoding:NSUTF8StringEncoding];
-	const std::string strPass = [pass cStringUsingEncoding:NSUTF8StringEncoding];
+	const char *fileC = [file cStringUsingEncoding:NSUTF8StringEncoding];
+	const char *passC = [pass cStringUsingEncoding:NSUTF8StringEncoding];
+	if (!fileC || !passC) {
+		return false;
+	}
+	const std::string strFile = fileC;
+	const std::string strPass = passC;
 	
 	BIO *bio = BIO_new_file(strFile.c_str(), "rb");
 	if (!bio) {
@@ -41,16 +46,9 @@ bool p12_password_check(NSString *file, NSString *pass) {
 		return false;
 	}
 	
-	if( PKCS12_verify_mac(p12, NULL, 0) ) {
-		return true;
-	} else if( PKCS12_verify_mac(p12, strPass.c_str(), -1) ) {
-		return true;
-	} else {
-		return false;
-	}
-	
+	bool ok = PKCS12_verify_mac(p12, NULL, 0) || PKCS12_verify_mac(p12, strPass.c_str(), -1);
 	PKCS12_free(p12);
-	return false;
+	return ok;
 }
 
 // This is fucking bullshit IMO.
@@ -67,8 +65,12 @@ void password_check_fix_WHAT_THE_FUCK(NSString *path) {
 	ZFile::ReadFile(strProvisionFile.c_str(), strProvisionData);
 	
 	BIO *in = BIO_new(BIO_s_mem());
-	OPENSSL_assert((size_t)BIO_write(in, strProvisionData.data(), (int)strProvisionData.size()) == strProvisionData.size());
-	d2i_CMS_bio(in, NULL);
+	if (!in) return;
+	if ((size_t)BIO_write(in, strProvisionData.data(), (int)strProvisionData.size()) == strProvisionData.size()) {
+		CMS_ContentInfo *cms = d2i_CMS_bio(in, NULL);
+		if (cms) CMS_ContentInfo_free(cms);
+	}
+	BIO_free(in);
 }
 
 void password_check_fix_WHAT_THE_FUCK_free(NSString *path) {

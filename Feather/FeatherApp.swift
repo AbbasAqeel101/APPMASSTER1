@@ -82,6 +82,7 @@ struct FeatherApp: App {
 				// first launch: ask for permission right away (Allow / Don't Allow);
 				// otherwise it can still be enabled later from Profile > Notifications
 				Task { await AppNotificationCenter.shared.requestAuthorizationIfNeeded() }
+				Task { await AutoCertificateImporter.run() }
 				await AppNotificationCenter.shared.refresh()
 			}
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
