@@ -14,6 +14,7 @@ import NimbleViews
 struct CatalogSearchView: View {
 	@StateObject private var viewModel = SourcesViewModel.shared
 	@State private var _searchText = ""
+	@State private var _limit = 60
 
 	@FetchRequest(
 		entity: AltSource.entity(),
@@ -50,13 +51,20 @@ struct CatalogSearchView: View {
 
 		NavigationStack {
 			List {
-				ForEach(results) { entry in
+				ForEach(results.prefix(_limit)) { entry in
 					CatalogRowView(entry: entry)
+				}
+				if results.count > _limit {
+					Color.clear
+						.frame(height: 1)
+						.listRowSeparator(.hidden)
+						.onAppear { _limit += 60 }
 				}
 			}
 			.listStyle(.plain)
 			.navigationTitle(.localized("Search"))
 			.searchable(text: $_searchText, prompt: Text(.localized("Apps and games")))
+			.onChange(of: _searchText) { _ in _limit = 60 }
 			.overlay {
 				if results.isEmpty {
 					if viewModel.sources.isEmpty {

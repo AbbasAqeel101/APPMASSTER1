@@ -241,8 +241,8 @@ extension HomeView {
 				.padding(.horizontal)
 
 			ScrollView(.horizontal, showsIndicators: false) {
-				HStack(spacing: 16) {
-					ForEach(apps, id: \.currentUniqueId) { app in
+				LazyHStack(spacing: 16) {
+					ForEach(Array(apps.prefix(30)), id: \.currentUniqueId) { app in
 						NavigationLink {
 							SourceAppsDetailView(sourceURL: _companySource?.sourceURL, source: repo, app: app)
 						} label: {

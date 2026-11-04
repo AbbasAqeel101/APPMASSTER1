@@ -19,6 +19,7 @@ struct CatalogAppsView: View {
 	@StateObject private var viewModel = SourcesViewModel.shared
 	@State private var _selectedCategory: String?
 	@State private var _isLibraryPresenting = false
+	@State private var _limit = 60
 
 	@FetchRequest(
 		entity: AltSource.entity(),
@@ -53,10 +54,17 @@ struct CatalogAppsView: View {
 				}
 
 				List {
-					ForEach(visible) { entry in
+					ForEach(visible.prefix(_limit)) { entry in
 						CatalogRowView(entry: entry)
 					}
+					if visible.count > _limit {
+						Color.clear
+							.frame(height: 1)
+							.listRowSeparator(.hidden)
+							.onAppear { _limit += 60 }
+					}
 				}
+				.onChange(of: _selectedCategory) { _ in _limit = 60 }
 				.listStyle(.plain)
 				.overlay {
 					if visible.isEmpty {
