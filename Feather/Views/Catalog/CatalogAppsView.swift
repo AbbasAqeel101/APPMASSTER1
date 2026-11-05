@@ -48,27 +48,27 @@ struct CatalogAppsView: View {
 		let visible = _visible(from: entries)
 
 		NBNavigationView(_title, displayMode: .inline) {
-			VStack(spacing: 0) {
+			List {
 				CatalogChipsBar(categories: categories, selection: $_selectedCategory)
-					.background(Color(uiColor: .systemBackground))
+					.listRowInsets(EdgeInsets())
+					.listRowSeparator(.hidden)
+					.listRowBackground(Color.clear)
 
-				List {
-					ForEach(visible.prefix(_limit)) { entry in
-						CatalogRowView(entry: entry)
-					}
-					if visible.count > _limit {
-						Color.clear
-							.frame(height: 1)
-							.listRowSeparator(.hidden)
-							.onAppear { _limit += 60 }
-					}
+				ForEach(visible.prefix(_limit)) { entry in
+					CatalogRowView(entry: entry)
 				}
-				.onChange(of: _selectedCategory) { _ in _limit = 60 }
-				.listStyle(.plain)
-				.overlay {
-					if visible.isEmpty {
-						_placeholder()
-					}
+				if visible.count > _limit {
+					Color.clear
+						.frame(height: 1)
+						.listRowSeparator(.hidden)
+						.onAppear { _limit += 60 }
+				}
+			}
+			.onChange(of: _selectedCategory) { _ in _limit = 60 }
+			.listStyle(.plain)
+			.overlay {
+				if visible.isEmpty {
+					_placeholder()
 				}
 			}
 			.toolbar {
