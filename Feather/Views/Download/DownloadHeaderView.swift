@@ -49,7 +49,7 @@ struct DownloadItemView: View {
 	
 	var body: some View {
 		VStack(alignment: .leading, spacing: 4) {
-			Text(download.fileName)
+			Text(download.displayName)
 				.font(.subheadline)
 				.lineLimit(1)
 			

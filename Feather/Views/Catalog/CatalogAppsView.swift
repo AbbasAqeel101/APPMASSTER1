@@ -31,9 +31,8 @@ struct CatalogAppsView: View {
 		kind == .games ? .localized("Games") : .localized("Apps")
 	}
 
-	private var _tabEntries: [CatalogEntry] {
-		let all = CompanyCatalog.entries(sources: Array(_sources), viewModel: viewModel)
-		return CompanyCatalog.entries(of: kind, from: all)
+	private var _allEntries: [CatalogEntry] {
+		CompanyCatalog.entries(sources: Array(_sources), viewModel: viewModel)
 	}
 
 	private func _visible(from entries: [CatalogEntry]) -> [CatalogEntry] {
@@ -43,16 +42,13 @@ struct CatalogAppsView: View {
 
 	// MARK: Body
 	var body: some View {
-		let entries = _tabEntries
-		let categories = CompanyCatalog.categories(in: entries)
+		let all = _allEntries
+		let entries = CompanyCatalog.entries(of: kind, from: all)
+		let categories = CompanyCatalog.categories(of: kind, all: all, tab: entries)
 		let visible = _visible(from: entries)
 
 		NBNavigationView(_title, displayMode: .inline) {
 			VStack(spacing: 0) {
-				if !categories.isEmpty {
-					CatalogChipsBar(categories: categories, selection: $_selectedCategory)
-				}
-
 				List {
 					ForEach(visible.prefix(_limit)) { entry in
 						CatalogRowView(entry: entry)
@@ -66,6 +62,11 @@ struct CatalogAppsView: View {
 				}
 				.onChange(of: _selectedCategory) { _ in _limit = 60 }
 				.listStyle(.plain)
+				.safeAreaInset(edge: .top, spacing: 0) {
+					CatalogChipsBar(categories: categories, selection: $_selectedCategory)
+						.frame(maxWidth: .infinity)
+						.background(Color(uiColor: .systemBackground))
+				}
 				.overlay {
 					if visible.isEmpty {
 						_placeholder()
@@ -107,7 +108,7 @@ struct CatalogAppsView: View {
 				Image(systemName: "square.grid.2x2")
 					.font(.system(size: 40))
 					.foregroundStyle(.secondary)
-				Text(.localized("No apps yet"))
+				Text(.localized(_selectedCategory == nil ? "No apps yet" : "No apps in this category"))
 					.font(.headline)
 			}
 		}

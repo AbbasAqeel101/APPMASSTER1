@@ -76,21 +76,24 @@ enum CompanyCatalog {
 		}
 	}
 
-	/// Distinct, non-empty categories in the order the catalog lists them.
-	static func categories(in entries: [CatalogEntry]) -> [String] {
-		var present = Set<String>()
-		var firstSeen: [String] = []
-		for entry in entries {
-			let name = entry.category
-			if name.isEmpty || present.contains(name) { continue }
-			present.insert(name)
-			firstSeen.append(name)
+	/// Every category of the tab, in the dashboard's order, even when it has no apps yet.
+	static func categories(of kind: Kind, all: [CatalogEntry], tab: [CatalogEntry]) -> [String] {
+		var result: [String] = []
+		var seen = Set<String>()
+		func add(_ name: String) {
+			let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+			if trimmed.isEmpty || seen.contains(trimmed) { return }
+			seen.insert(trimmed)
+			result.append(trimmed)
 		}
-		// the dashboard decides which categories get a chip, and their order
-		if let order = entries.first?.repository.categoryOrder {
-			return order.filter { present.contains($0) }
+
+		if let repository = all.first?.repository {
+			let listed = kind == .games ? repository.gameCategories : repository.appCategories
+			for name in listed ?? [] { add(name) }
 		}
-		return firstSeen
+		// categories carried by the apps themselves (older feeds / other sources)
+		for entry in tab { add(entry.category) }
+		return result
 	}
 }
 
@@ -162,11 +165,11 @@ struct CatalogChipsBar: View {
 			Text(verbatim: title)
 				.font(.subheadline.weight(.semibold))
 				.lineLimit(1)
-				.foregroundStyle(isSelected ? Color.white : Color.primary)
+				.foregroundStyle(isSelected ? Color.white : Color(uiColor: .label))
 				.padding(.horizontal, 16)
 				.padding(.vertical, 9)
 				.background(
-					Capsule().fill(isSelected ? Color.accentColor : Color(uiColor: .secondarySystemFill))
+					Capsule().fill(isSelected ? Color.accentColor : Color(uiColor: .tertiarySystemFill))
 				)
 		}
 		.buttonStyle(.plain)

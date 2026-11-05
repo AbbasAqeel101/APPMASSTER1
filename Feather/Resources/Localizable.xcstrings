@@ -11082,6 +11082,23 @@
         }
       }
     },
+    "No apps in this category": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد تطبيقات في هذا القسم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No apps in this category"
+          }
+        }
+      }
+    },
     "No apps yet": {
       "extractionState": "manual",
       "localizations": {

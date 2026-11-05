@@ -36,6 +36,8 @@ public struct ASRepository: Sendable, Decodable, Hashable, Identifiable {
 	public var featuredApps: [App.ID]?
 	public var news: [News]?
 	public var categoryOrder: [String]?
+	public var appCategories: [String]?
+	public var gameCategories: [String]?
 
 	public init(from decoder: any Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -99,6 +101,8 @@ public struct ASRepository: Sendable, Decodable, Hashable, Identifiable {
 			try container.decodeIfPresent([App.ID].self, forKey: .featuredApps) ?? []
 		self.news = try container.decodeIfPresent([News].self, forKey: .news) ?? []
 		self.categoryOrder = try? container.decodeIfPresent([String].self, forKey: .categoryOrder)
+		self.appCategories = try? container.decodeIfPresent([String].self, forKey: .appCategories)
+		self.gameCategories = try? container.decodeIfPresent([String].self, forKey: .gameCategories)
 	}
 
 	public enum CodingKeys: String, CodingKey {
@@ -115,7 +119,9 @@ public struct ASRepository: Sendable, Decodable, Hashable, Identifiable {
 		     apps,
 		     featuredApps,
 		     news,
-		     categoryOrder
+		     categoryOrder,
+		     appCategories,
+		     gameCategories
 	}
 	
 	public var currentIconURL: URL? {

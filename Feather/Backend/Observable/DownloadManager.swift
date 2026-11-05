@@ -28,6 +28,7 @@ class Download: Identifiable, @unchecked Sendable {
 	let id: String
 	let url: URL
 	let fileName: String
+	let displayName: String
 	let onlyArchiving: Bool
 	var sourceProvenance: SourceAppProvenance?
 	/// AppMaster: sign with the default certificate and install right after the
@@ -48,6 +49,9 @@ class Download: Identifiable, @unchecked Sendable {
 		self.url = url
 		self.onlyArchiving = onlyArchiving
 		self.sourceProvenance = sourceProvenance
+		// AppMaster: show the app's own name, never the file name from the link
+		let appName = sourceProvenance?.sourceAppName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+		self.displayName = appName.isEmpty ? url.deletingPathExtension().lastPathComponent : appName
 		self.fileName = url.lastPathComponent
 	}
 }
@@ -143,7 +147,7 @@ class DownloadManager: NSObject, ObservableObject {
 		
 		#if !targetEnvironment(macCatalyst)
 		if #available(iOS 26.0, *) {
-			BackgroundTaskManager.shared.startTask(for: id, filename: url.lastPathComponent)
+			BackgroundTaskManager.shared.startTask(for: id, filename: download.displayName)
 		} else {
 			_updateBackgroundAudioState()
 		}

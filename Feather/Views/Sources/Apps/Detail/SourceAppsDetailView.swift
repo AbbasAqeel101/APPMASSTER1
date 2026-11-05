@@ -47,16 +47,18 @@ struct SourceAppsDetailView: View {
 						standardIcon
 					}
 
-					VStack(alignment: .leading, spacing: 2) {
+					ZStack(alignment: .bottomLeading) {
 						Text(app.currentName)
 							.font(.title2)
 							.fontWeight(.semibold)
 							.foregroundColor(.primary)
-						Spacer()
+							.lineLimit(2)
+							.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+							.padding(.bottom, 12)
 						
 						DownloadButtonView(sourceURL: sourceURL, source: source, app: app)
 					}
-					.lineLimit(2)
+					.frame(height: 111)
 					.frame(maxWidth: .infinity, alignment: .leading)
 				}
 				
@@ -232,7 +234,7 @@ extension SourceAppsDetailView {
 	@ViewBuilder
 	private func _header() -> some View {
 		ZStack {
-			if let iconURL = source.currentIconURL {
+			if let iconURL = app.iconURL ?? source.currentIconURL {
 				LazyImage(url: iconURL) { state in
 					if let image = state.image {
 						image.resizable()
