@@ -49,6 +49,9 @@ struct CatalogAppsView: View {
 
 		NBNavigationView(_title, displayMode: .inline) {
 			VStack(spacing: 0) {
+				CatalogChipsBar(categories: categories, selection: $_selectedCategory)
+					.background(Color(uiColor: .systemBackground))
+
 				List {
 					ForEach(visible.prefix(_limit)) { entry in
 						CatalogRowView(entry: entry)
@@ -62,11 +65,6 @@ struct CatalogAppsView: View {
 				}
 				.onChange(of: _selectedCategory) { _ in _limit = 60 }
 				.listStyle(.plain)
-				.safeAreaInset(edge: .top, spacing: 0) {
-					CatalogChipsBar(categories: categories, selection: $_selectedCategory)
-						.frame(maxWidth: .infinity)
-						.background(Color(uiColor: .systemBackground))
-				}
 				.overlay {
 					if visible.isEmpty {
 						_placeholder()
