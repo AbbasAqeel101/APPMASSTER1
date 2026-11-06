@@ -14,6 +14,7 @@ import NukeUI
 // MARK: - SourceAppsDetailView
 struct SourceAppsDetailView: View {
 	@ObservedObject var downloadManager = DownloadManager.shared
+	@ObservedObject private var _favorites = FavoritesStore.shared
 	@State private var _downloadProgress: Double = 0
 	@State var cancellable: AnyCancellable? // Combine
 	@State private var _isScreenshotPreviewPresented: Bool = false
@@ -192,17 +193,31 @@ struct SourceAppsDetailView: View {
 		.flexibleHeaderScrollView()
 		.shouldSetInset()
 		.toolbar {
-			NBToolbarButton(
-				systemImage: "square.and.arrow.up",
-				placement: .topBarTrailing
-			) {
-				let sharedString = """
-				\(app.currentName) - \(app.currentVersion ?? "0")
-				\(app.currentDescription ?? .localized("An awesome application"))
-				---
-				\(source.website?.absoluteString ?? source.name ?? "")
-				"""
-				UIActivityViewController.show(activityItems: [sharedString])
+			ToolbarItem(placement: .topBarTrailing) {
+				Menu {
+					Button {
+						let sharedString = """
+						\(app.currentName) - \(app.currentVersion ?? "0")
+						\(app.currentDescription ?? .localized("An awesome application"))
+						---
+						\(source.website?.absoluteString ?? source.name ?? "")
+						"""
+						UIActivityViewController.show(activityItems: [sharedString])
+					} label: {
+						Label(.localized("Share"), systemImage: "square.and.arrow.up")
+					}
+					Button {
+						_favorites.toggle(app)
+					} label: {
+						if _favorites.isFavorite(app) {
+							Label(.localized("Remove from Favorites"), systemImage: "star.slash")
+						} else {
+							Label(.localized("Add to Favorites"), systemImage: "star")
+						}
+					}
+				} label: {
+					Image(systemName: "ellipsis")
+				}
 			}
 		}
 		.fullScreenCover(isPresented: $_isScreenshotPreviewPresented) {
@@ -288,8 +303,14 @@ extension SourceAppsDetailView {
 			pills.append(NBPillItem(title: version, icon: "tag", color: Color.accentColor))
 		}
 		
+		pills.append(NBPillItem(title: "\(app.downloads ?? 0)", icon: "arrow.down.circle", color: .secondary))
+		
 		if let size = app.size {
 			pills.append(NBPillItem(title: size.formattedByteCount, icon: "archivebox", color: .secondary))
+		}
+		
+		if let category = app.category, !category.isEmpty {
+			pills.append(NBPillItem(title: category, icon: "square.grid.2x2", color: .secondary))
 		}
 		
 		return pills

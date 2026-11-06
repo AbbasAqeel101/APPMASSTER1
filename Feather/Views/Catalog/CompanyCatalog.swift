@@ -76,6 +76,16 @@ enum CompanyCatalog {
 		}
 	}
 
+	/// The tab's own main category ("تطبيقات" / "العاب"): it is the same as the "All" chip, so no chip is shown for it.
+	static func isMainCategory(_ name: String, kind: Kind) -> Bool {
+		let value = name
+			.lowercased()
+			.replacingOccurrences(of: "أ", with: "ا")
+			.trimmingCharacters(in: .whitespacesAndNewlines)
+		let main: [String] = kind == .games ? ["العاب", "games"] : ["تطبيقات", "apps"]
+		return main.contains(value)
+	}
+
 	/// Every category of the tab, in the dashboard's order, even when it has no apps yet.
 	static func categories(of kind: Kind, all: [CatalogEntry], tab: [CatalogEntry]) -> [String] {
 		var result: [String] = []
@@ -83,6 +93,7 @@ enum CompanyCatalog {
 		func add(_ name: String) {
 			let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
 			if trimmed.isEmpty || seen.contains(trimmed) { return }
+			if isMainCategory(trimmed, kind: kind) { return }
 			seen.insert(trimmed)
 			result.append(trimmed)
 		}
@@ -118,7 +129,8 @@ struct CatalogRowView: View {
 				DownloadButtonView(
 					sourceURL: entry.sourceURL,
 					source: entry.repository,
-					app: entry.app
+					app: entry.app,
+					compact: true
 				)
 			}
 		}
@@ -138,7 +150,7 @@ struct CatalogRowView: View {
 
 // MARK: - Category chips
 struct CatalogChipsBar: View {
-	let categories: [String]
+	let categories: [CategoryChip]
 	@Binding var selection: String?
 
 	var body: some View {
@@ -148,9 +160,9 @@ struct CatalogChipsBar: View {
 					selection = nil
 				}
 
-				ForEach(categories, id: \.self) { name in
-					_chip(title: name, isSelected: selection == name) {
-						selection = name
+				ForEach(categories) { chip in
+					_chip(title: chip.title, isSelected: selection == chip.key) {
+						selection = chip.key
 					}
 				}
 			}

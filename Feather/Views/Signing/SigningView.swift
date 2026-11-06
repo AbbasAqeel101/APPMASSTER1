@@ -303,6 +303,7 @@ extension SigningView {
 						NotificationCenter.default.post(name: Notification.Name("Feather.installApp"), object: nil)
 					}
 				}
+				OneTapInstaller.shared.finishCustomize()
 				dismiss()
 			}
 		}

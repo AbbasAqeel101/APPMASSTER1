@@ -14,6 +14,8 @@ struct DownloadButtonView: View {
 	let sourceURL: URL?
 	let source: ASRepository?
 	let app: ASRepository.App
+	/// Smaller pills for list rows.
+	var compact: Bool = false
 	@ObservedObject private var downloadManager = DownloadManager.shared
 
 	@State private var downloadProgress: Double = 0
@@ -46,30 +48,43 @@ struct DownloadButtonView: View {
 				}
 				.compatTransition()
 			} else {
-				Button {
-					if let url = app.currentDownloadUrl {
-						// AppMaster: one tap = download -> sign -> install.
-						// If there is no certificate yet, `begin` tells the person
-						// and the app is simply saved in the Library like before.
-						let autoInstall = OneTapInstaller.shared.begin(name: app.currentName)
-						_ = downloadManager.startDownload(
-							from: url,
-							id: app.currentUniqueId,
-							sourceProvenance: _sourceProvenance(),
-							autoInstall: autoInstall
-						)
+				HStack(spacing: compact ? 6 : 8) {
+					Button {
+						if let url = app.currentDownloadUrl {
+							// AppMaster: one tap = download -> sign -> install.
+							// If there is no certificate yet, `begin` tells the person
+							// and the app is simply saved in the Library like before.
+							let autoInstall = OneTapInstaller.shared.begin(name: app.currentName)
+							DownloadCounter.report(url: url)
+							_ = downloadManager.startDownload(
+								from: url,
+								id: app.currentUniqueId,
+								sourceProvenance: _sourceProvenance(),
+								autoInstall: autoInstall
+							)
+						}
+					} label: {
+						_pill(.localized("Install"), prominent: true)
 					}
-				} label: {
-					Text(.localized("Get"))
-						.lineLimit(0)
-						.font(.headline.bold())
-						.foregroundStyle(Color.accentColor)
-						.padding(.horizontal, 24)
-						.padding(.vertical, 6)
-						.background(Color(uiColor: .quaternarySystemFill))
-						.clipShape(Capsule())
+					.buttonStyle(.borderless)
+
+					Button {
+						if let url = app.currentDownloadUrl {
+							// download, then open the signing screen for this app
+							_ = OneTapInstaller.shared.begin(name: app.currentName, customize: true)
+							DownloadCounter.report(url: url)
+							_ = downloadManager.startDownload(
+								from: url,
+								id: app.currentUniqueId,
+								sourceProvenance: _sourceProvenance(),
+								autoInstall: true
+							)
+						}
+					} label: {
+						_pill(.localized("Customize"), prominent: false)
+					}
+					.buttonStyle(.borderless)
 				}
-				.buttonStyle(.borderless)
 				.compatTransition()
 			}
 		}
@@ -79,6 +94,19 @@ struct DownloadButtonView: View {
 			setupObserver()
 		}
 		.animation(.easeInOut(duration: 0.3), value: downloadManager.getDownload(by: app.currentUniqueId) != nil)
+	}
+
+	@ViewBuilder
+	private func _pill(_ title: String, prominent: Bool) -> some View {
+		Text(title)
+			.lineLimit(1)
+			.minimumScaleFactor(0.8)
+			.font((compact ? Font.subheadline : Font.headline).bold())
+			.foregroundStyle(Color.accentColor)
+			.padding(.horizontal, compact ? 12 : 20)
+			.padding(.vertical, compact ? 5 : 6)
+			.background(Color(uiColor: prominent ? .quaternarySystemFill : .quaternarySystemFill).opacity(prominent ? 1 : 0.6))
+			.clipShape(Capsule())
 	}
 
 	private func setupObserver() {

@@ -184,6 +184,9 @@ extension ASRepository {
 
 		public var section: String?
 
+		/// AppMaster: how many times the app was installed from the store (dashboard counter).
+		public var downloads: Int?
+
 		public var beta: Bool?
 
 		public var permissions: [Permission]?
@@ -286,6 +289,8 @@ extension ASRepository {
 
 			self.section = try? container.decodeIfPresent(String.self, forKey: .section)
 
+			self.downloads = try? container.decodeIfPresent(Int.self, forKey: .downloads)
+
 			self.beta =
 				(try? container.decodeIfPresent(Bool.self, forKey: .beta)) ?? false
 
@@ -361,7 +366,7 @@ extension ASRepository {
 			case name, subtitle, description
 			case developer = "developerName"
 			case versions, version, versionDate, date, versionDescription, downloadURL,
-			     localizedDescription, iconURL, tintColor, size, category, section, beta
+			     localizedDescription, iconURL, tintColor, size, category, section, downloads, beta
 			case permissions, appPermissions
 			case screenshots, screenshotURLs
 			case marketplaceID

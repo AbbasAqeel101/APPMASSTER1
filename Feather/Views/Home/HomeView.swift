@@ -114,6 +114,8 @@ struct HomeView: View {
 
 		for app in repo.apps {
 			guard let category = app.category?.trimmingCharacters(in: .whitespacesAndNewlines), !category.isEmpty else { continue }
+			// custom categories live in the Apps / Games tabs (as chips), Home keeps only the main rows
+			guard CompanyCatalog.isMainCategory(category, kind: .apps) || CompanyCatalog.isMainCategory(category, kind: .games) else { continue }
 			if groups[category] == nil {
 				groups[category] = []
 				order.append(category)

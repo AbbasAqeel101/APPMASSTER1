@@ -69,6 +69,9 @@ struct FeatherApp: App {
 					.presentationDetents([.height(200)])
 					.presentationDragIndicator(.visible)
 			}
+			.fullScreenCover(item: $oneTapInstaller.customizeApp) { app in
+				SigningView(app: app.base)
+			}
 			.onReceive(NotificationCenter.default.publisher(for: .heartbeatInvalidHost)) { _ in
 				DispatchQueue.main.async {
 					UIAlertController.showAlertWithOk(

@@ -17,6 +17,7 @@ struct CatalogAppsView: View {
 	let kind: CompanyCatalog.Kind
 
 	@StateObject private var viewModel = SourcesViewModel.shared
+	@ObservedObject private var _prefs = UserCategoryPrefs.shared
 	@State private var _selectedCategory: String?
 	@State private var _isLibraryPresenting = false
 	@State private var _limit = 60
@@ -35,17 +36,28 @@ struct CatalogAppsView: View {
 		CompanyCatalog.entries(sources: Array(_sources), viewModel: viewModel)
 	}
 
-	private func _visible(from entries: [CatalogEntry]) -> [CatalogEntry] {
-		guard let selected = _selectedCategory else { return entries }
+	private func _visible(from entries: [CatalogEntry], selected: String?) -> [CatalogEntry] {
+		guard let selected else { return entries }
+		if selected.hasPrefix("user:") {
+			let keys = Set(_prefs.appKeys(of: selected))
+			return entries.filter { keys.contains(CatalogKey.of($0.app)) }
+		}
 		return entries.filter { $0.category == selected }
+	}
+
+	/// A chip the person just hid/removed must not stay selected.
+	private func _validSelection(_ categories: [CategoryChip]) -> String? {
+		guard let selected = _selectedCategory else { return nil }
+		return categories.contains(where: { $0.key == selected }) ? selected : nil
 	}
 
 	// MARK: Body
 	var body: some View {
 		let all = _allEntries
 		let entries = CompanyCatalog.entries(of: kind, from: all)
-		let categories = CompanyCatalog.categories(of: kind, all: all, tab: entries)
-		let visible = _visible(from: entries)
+		let baseCategories = CompanyCatalog.categories(of: kind, all: all, tab: entries)
+		let categories = _prefs.chips(for: kind, base: baseCategories)
+		let visible = _visible(from: entries, selected: _validSelection(categories))
 
 		NBNavigationView(_title, displayMode: .inline) {
 			List {

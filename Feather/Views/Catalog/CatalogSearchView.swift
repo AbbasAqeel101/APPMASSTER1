@@ -14,11 +14,11 @@ import AltSourceKit
 import NimbleViews
 
 struct CatalogSearchView: View {
-	@StateObject private var viewModel = SourcesViewModel.shared
+	@StateObject fileprivate var viewModel = SourcesViewModel.shared
 	@State private var _searchText = ""
-	@State private var _limit = 60
-	@State private var _items: [CatalogSearchItem] = []
-	@State private var _results: [CatalogEntry] = []
+	@State fileprivate var _limit = 60
+	@State fileprivate var _items: [CatalogSearchItem] = []
+	@State fileprivate var _results: [CatalogEntry] = []
 
 	@FetchRequest(
 		entity: AltSource.entity(),
@@ -31,33 +31,22 @@ struct CatalogSearchView: View {
 		let count: Int
 	}
 
+	private var _isSearching: Bool {
+		!_searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+	}
+
 	// MARK: Body
 	var body: some View {
 		NavigationStack {
-			List {
-				ForEach(_results.prefix(_limit)) { entry in
-					CatalogRowView(entry: entry)
-				}
-				if _results.count > _limit {
-					Color.clear
-						.frame(height: 1)
-						.listRowSeparator(.hidden)
-						.onAppear { _limit += 60 }
+			Group {
+				if _isSearching {
+					_resultsList()
+				} else {
+					CatalogSearchLanding(entries: CompanyCatalog.entries(sources: Array(_sources), viewModel: viewModel))
 				}
 			}
-			.listStyle(.plain)
 			.navigationTitle(.localized("Search"))
 			.searchable(text: $_searchText, prompt: Text(.localized("Apps and games")))
-			.overlay {
-				if _results.isEmpty {
-					if viewModel.sources.isEmpty || _items.isEmpty {
-						ProgressView()
-					} else {
-						Text(.localized("No Results"))
-							.foregroundStyle(.secondary)
-					}
-				}
-			}
 		}
 		.task(id: Array(_sources)) {
 			await viewModel.fetchSources(_sources)
@@ -82,6 +71,35 @@ struct CatalogSearchView: View {
 			if Task.isCancelled { return }
 			_results = found
 			_limit = 60
+		}
+	}
+}
+
+// MARK: - Results
+extension CatalogSearchView {
+	@ViewBuilder
+	fileprivate func _resultsList() -> some View {
+		List {
+			ForEach(_results.prefix(_limit)) { entry in
+				CatalogRowView(entry: entry)
+			}
+			if _results.count > _limit {
+				Color.clear
+					.frame(height: 1)
+					.listRowSeparator(.hidden)
+					.onAppear { _limit += 60 }
+			}
+		}
+		.listStyle(.plain)
+		.overlay {
+			if _results.isEmpty {
+				if viewModel.sources.isEmpty || _items.isEmpty {
+					ProgressView()
+				} else {
+					Text(.localized("No Results"))
+						.foregroundStyle(.secondary)
+				}
+			}
 		}
 	}
 }

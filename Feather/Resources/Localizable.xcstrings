@@ -20145,6 +20145,146 @@
           }
         }
       }
+    },
+    "Customize": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تخصيص"
+          }
+        }
+      }
+    },
+    "Favorites": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المفضلة"
+          }
+        }
+      }
+    },
+    "Share": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشاركة"
+          }
+        }
+      }
+    },
+    "Add to Favorites": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إضافة إلى المفضلة"
+          }
+        }
+      }
+    },
+    "Remove from Favorites": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة من المفضلة"
+          }
+        }
+      }
+    },
+    "Customize Interface": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تخصيص الواجهة"
+          }
+        }
+      }
+    },
+    "Suggestions": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اقتراحات"
+          }
+        }
+      }
+    },
+    "Browse": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصفح"
+          }
+        }
+      }
+    },
+    "Most Downloaded Apps": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التطبيقات الأكثر تنزيلاً"
+          }
+        }
+      }
+    },
+    "Most Downloaded Games": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الألعاب الأكثر تنزيلاً"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استعادة"
+          }
+        }
+      }
+    },
+    "New Category": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صنف جديد"
+          }
+        }
+      }
+    },
+    "Rename": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة تسمية"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

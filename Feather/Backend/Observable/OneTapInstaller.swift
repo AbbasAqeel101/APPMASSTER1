@@ -32,6 +32,13 @@ final class OneTapInstaller: ObservableObject {
 	@Published private(set) var phase: Phase = .idle
 	/// Presented as the install sheet by the root view once signing is done.
 	@Published var installApp: AnyApp?
+	/// Presented full screen (the signing screen) when the person taps "Customize".
+	@Published var customizeApp: AnyApp? {
+		didSet {
+			if customizeApp == nil { _customizeMode = false }
+		}
+	}
+	private var _customizeMode = false
 	/// 0...1 while the IPA downloads, plus a "12 MB / 32 MB · 3 MB/s" line for the toast.
 	@Published private(set) var downloadFraction: Double = 0
 	@Published private(set) var downloadDetail: String = ""
@@ -53,7 +60,13 @@ final class OneTapInstaller: ObservableObject {
 	/// toast) when the app can't be signed automatically; the download then behaves like
 	/// before and the app is just saved in the Library.
 	@discardableResult
-	func begin(name: String) -> Bool {
+	func begin(name: String, customize: Bool = false) -> Bool {
+		_customizeMode = customize
+		if customize {
+			_resetDownloadStats()
+			_set(.downloading(name))
+			return true
+		}
 		guard _canSign else {
 			_set(.failed(.localized("Add a certificate first. The app will be saved in the Library.")), hideAfter: 5)
 			return false
@@ -64,6 +77,7 @@ final class OneTapInstaller: ObservableObject {
 	}
 
 	func reset() {
+		_customizeMode = false
 		_set(.idle)
 	}
 
@@ -134,7 +148,24 @@ final class OneTapInstaller: ObservableObject {
 			return
 		}
 
+		if _customizeMode {
+			// open the normal signing screen (bundle id, icon, dylibs...) for this app
+			_set(.idle)
+			customizeApp = AnyApp(base: app)
+			return
+		}
+
 		_sign(app)
+	}
+
+	/// After the signing screen of "Customize" finished: offer the install prompt.
+	func finishCustomize() {
+		guard _customizeMode else { return }
+		_customizeMode = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+			guard let self, let signed = self._latestSigned() else { return }
+			self.installApp = AnyApp(base: signed)
+		}
 	}
 
 	// MARK: Signing

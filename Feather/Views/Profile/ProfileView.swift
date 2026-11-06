@@ -172,6 +172,9 @@ extension ProfileView {
 			NavigationLink(destination: NotificationsView(mode: .settings)) {
 				Label(.localized("Notifications"), systemImage: "bell.badge")
 			}
+			NavigationLink(destination: FavoritesView()) {
+				Label(.localized("Favorites"), systemImage: "star")
+			}
 			NavigationLink(destination: AboutView()) {
 				Label {
 					Text(verbatim: .localized("About %@", arguments: Bundle.main.name))
@@ -187,6 +190,9 @@ extension ProfileView {
 	@ViewBuilder
 	private func _features() -> some View {
 		NBSection(.localized("Features")) {
+			NavigationLink(destination: CustomizeInterfaceView()) {
+				Label(.localized("Customize Interface"), systemImage: "slider.horizontal.3")
+			}
 			NavigationLink(destination: ConfigurationView()) {
 				Label(.localized("Signing Options"), systemImage: "signature")
 			}
