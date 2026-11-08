@@ -19,13 +19,20 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_26.3.0.app
 
-      # Xcode downloads the binary packages (IDevice, LicensePlistBinary) in parallel and
-      # sometimes fails with "already exists in file system". Resolve them first, retrying
-      # (without deleting what a previous attempt already downloaded), and let the build reuse them.
+      # The runner keeps an old Swift package cache that makes Xcode fail with
+      # "failed downloading ... already exists in file system". Clear it, resolve the
+      # packages once into ./SourcePackages (the build reuses that folder, so nothing is
+      # downloaded a second time), and clear it again.
       - name: Resolve Swift packages
         run: |
+          clear_cache() {
+            rm -rf ~/Library/Caches/org.swift.swiftpm
+            rm -rf ~/Library/org.swift.swiftpm
+          }
           ok=0
           for i in 1 2 3 4 5; do
+            clear_cache
+            rm -rf SourcePackages
             if xcodebuild -resolvePackageDependencies -project Feather.xcodeproj -scheme Feather -clonedSourcePackagesDirPath SourcePackages; then
               ok=1
               break
@@ -33,10 +40,12 @@ jobs:
             echo "resolve attempt $i failed, retrying"
             sleep 15
           done
+          clear_cache
           if [ "$ok" != "1" ]; then
             echo "could not resolve packages"
             exit 1
           fi
+          ls SourcePackages/artifacts || true
 
       - name: Compile AppMaster
         run: |
