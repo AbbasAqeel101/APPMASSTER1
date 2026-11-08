@@ -16,9 +16,9 @@ import CoreText
 
 // MARK: - Font
 public enum AppFont {
-	public private(set) static var regularName: String?
-	public private(set) static var heavyName: String?
-	private static var _registered = false
+	nonisolated(unsafe) public private(set) static var regularName: String?
+	nonisolated(unsafe) public private(set) static var heavyName: String?
+	nonisolated(unsafe) private static var _registered = false
 
 	/// Registers every font file shipped inside the app and remembers their names.
 	public static func register() {
@@ -86,6 +86,7 @@ public enum AppFont {
 	public static var caption2: Font { _make(.caption2, 11, heavy: false) }
 
 	/// Titles of navigation bars and the tab bar (UIKit parts of the interface).
+	@MainActor
 	public static func applyUIKitAppearance() {
 		guard
 			let heavy = heavyName,
