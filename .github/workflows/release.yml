@@ -19,28 +19,41 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_26.3.0.app
 
-      # The runner keeps an old Swift package cache that makes Xcode fail with
-      # "failed downloading ... already exists in file system". Clear it, resolve the
-      # packages once into ./SourcePackages (the build reuses that folder, so nothing is
-      # downloaded a second time), and clear it again.
+      # Xcode fails to download the two binary packages (IDevice, LicensePlistBinary) with
+      # "already exists in file system". Download them here with curl (with retries), put
+      # them in a private package cache so Xcode finds them ready, and resolve once.
       - name: Resolve Swift packages
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          clear_cache() {
-            rm -rf ~/Library/Caches/org.swift.swiftpm
-            rm -rf ~/Library/org.swift.swiftpm
-          }
+          CACHE="$RUNNER_TEMP/spm-cache"
+          rm -rf "$CACHE" SourcePackages
+          mkdir -p "$CACHE/artifacts"
+
+          for url in \
+            "https://github.com/jkcoxson/idevice/releases/download/v0.1.57/IDevice.xcframework.zip" \
+            "https://github.com/mono0926/LicensePlist/releases/download/3.27.1/LicensePlistBinary-macos.artifactbundle.zip"
+          do
+            name=$(printf '%s' "$url" | sed 's/[^A-Za-z0-9]/_/g')
+            curl -fsSL --retry 8 --retry-delay 5 --retry-all-errors \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -o "$CACHE/artifacts/$name" "$url"
+            ls -l "$CACHE/artifacts/$name"
+            shasum -a 256 "$CACHE/artifacts/$name"
+          done
+
+          echo "PKG_CACHE=$CACHE" >> "$GITHUB_ENV"
+
           ok=0
-          for i in 1 2 3 4 5; do
-            clear_cache
-            rm -rf SourcePackages
-            if xcodebuild -resolvePackageDependencies -project Feather.xcodeproj -scheme Feather -clonedSourcePackagesDirPath SourcePackages; then
+          for i in 1 2 3; do
+            if xcodebuild -resolvePackageDependencies -project Feather.xcodeproj -scheme Feather \
+              -clonedSourcePackagesDirPath SourcePackages -packageCachePath "$CACHE"; then
               ok=1
               break
             fi
             echo "resolve attempt $i failed, retrying"
-            sleep 15
+            sleep 10
           done
-          clear_cache
           if [ "$ok" != "1" ]; then
             echo "could not resolve packages"
             exit 1

@@ -3,6 +3,7 @@ SCHEME := Feather
 PLATFORMS := iphoneos maccatalyst
 
 TMP := $(TMPDIR)/$(NAME)
+PKG_CACHE ?= $(TMP)/pkgcache
 CERT_JSON_URL := https://backloop.dev/pack.json
 
 .PHONY: all clean deps $(PLATFORMS)
@@ -40,6 +41,7 @@ $(PLATFORMS): deps
 		-derivedDataPath $(TMP)/$@ \
 		-skipPackagePluginValidation \
 		-clonedSourcePackagesDirPath SourcePackages \
+		-packageCachePath "$(PKG_CACHE)" \
 		CODE_SIGNING_ALLOWED=NO \
 		ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO
 
