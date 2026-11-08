@@ -196,6 +196,9 @@ extension ASRepository {
 		public var screenshots: Screenshots?
 
 		public var screenshotURLs: [URL]?
+
+		/// AppMaster: English description (App Store) for the AR / EN switch.
+		public var descriptionEN: String?
 		
 		public var marketplaceID: String?
 
@@ -310,6 +313,8 @@ extension ASRepository {
 
 			self.screenshotURLs =
 				try container.decodeIfPresent([URL].self, forKey: .screenshotURLs)
+
+			self.descriptionEN = try? container.decodeIfPresent(String.self, forKey: .descriptionEN)
 			
 			if
 				let marketplaceID = try container.decodeIfPresent(String.self, forKey: .marketplaceID),
@@ -368,7 +373,7 @@ extension ASRepository {
 			case versions, version, versionDate, date, versionDescription, downloadURL,
 			     localizedDescription, iconURL, tintColor, size, category, section, downloads, beta
 			case permissions, appPermissions
-			case screenshots, screenshotURLs
+			case screenshots, screenshotURLs, descriptionEN
 			case marketplaceID
 		}
 		
