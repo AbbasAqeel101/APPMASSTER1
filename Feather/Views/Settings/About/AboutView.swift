@@ -31,7 +31,7 @@ extension AboutView {
 					.shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 3)
 
 				Text(Bundle.main.name)
-					.font(.largeTitle)
+					.font(AppFont.largeTitle)
 					.bold()
 					.foregroundStyle(Color.accentColor)
 
@@ -39,11 +39,12 @@ extension AboutView {
 					Text(.localized("Version"))
 					Text(AppMasterConfig.displayVersion)
 				}
-				.font(.footnote)
+				.font(AppFont.footnote)
 				.foregroundStyle(.secondary)
 			}
 			.padding(.vertical, 12)
 		}
+		.appRowBackground()
 		.frame(maxWidth: .infinity)
 		.listRowBackground(EmptyView())
 	}
@@ -63,10 +64,10 @@ extension AboutView {
 
 					VStack(alignment: .leading, spacing: 2) {
 						Text(.localized("Developer Name"))
-							.font(.headline)
+							.font(AppFont.headline)
 							.foregroundStyle(.primary)
 						Text(verbatim: "Developer")
-							.font(.subheadline)
+							.font(AppFont.subheadline)
 							.foregroundStyle(.secondary)
 					}
 

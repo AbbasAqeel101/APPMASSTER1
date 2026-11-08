@@ -43,7 +43,7 @@ struct SigningTweaksView: View {
 					}
 				} else {
 					Text(verbatim: .localized("No files chosen."))
-						.font(.footnote)
+						.font(AppFont.footnote)
 						.foregroundColor(.disabled())
 				}
 			}

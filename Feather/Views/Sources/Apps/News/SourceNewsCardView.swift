@@ -53,7 +53,7 @@ struct SourceNewsCardView: View {
 			.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 			
 			Text(new.title)
-				.font(.headline)
+				.font(AppFont.headline)
 				.foregroundColor(.white)
 				.lineLimit(2)
 				.multilineTextAlignment(.leading)

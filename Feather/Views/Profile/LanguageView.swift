@@ -39,6 +39,7 @@ struct LanguageView: View {
 			} footer: {
 				Text(.localized("Restart the app for the language change to fully apply everywhere."))
 			}
+			.appRowBackground()
 		}
 		.alert(.localized("Language Changed"), isPresented: $_isRestartAlertPresented) {
 			Button(.localized("Later"), role: .cancel) { }

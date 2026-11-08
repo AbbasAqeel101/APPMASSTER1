@@ -142,9 +142,9 @@ extension StorageView {
 			VStack(alignment: .leading, spacing: 12) {
 				HStack(alignment: .firstTextBaseline, spacing: 6) {
 					Text(StorageUsage.format(_usage.total))
-						.font(.largeTitle.bold())
+						.font(AppFont.largeTitle.bold())
 					Text(verbatim: .localized("used by %@", arguments: Bundle.main.name))
-						.font(.subheadline)
+						.font(AppFont.subheadline)
 						.foregroundStyle(.secondary)
 				}
 
@@ -152,12 +152,13 @@ extension StorageView {
 
 				if let available = _usage.available {
 					Text(verbatim: .localized("%@ available on device", arguments: StorageUsage.format(available)))
-						.font(.footnote)
+						.font(AppFont.footnote)
 						.foregroundStyle(.secondary)
 				}
 			}
 			.padding(.vertical, 6)
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -248,6 +249,7 @@ extension StorageView {
 				systemImage: "photo.stack.fill"
 			)
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -266,6 +268,7 @@ extension StorageView {
 		} footer: {
 			Text(.localized("Clears temporary files and cached images. Apps you downloaded or signed are kept."))
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -287,7 +290,7 @@ extension StorageView {
 				Text(title)
 				if let count {
 					Text(verbatim: .localized("%lld items", arguments: count))
-						.font(.footnote)
+						.font(AppFont.footnote)
 						.foregroundStyle(.secondary)
 				}
 			}
@@ -394,11 +397,11 @@ extension StorageAppsListView {
 
 			VStack(alignment: .leading, spacing: 2) {
 				Text(app.name ?? .localized("Unknown"))
-					.font(.headline)
+					.font(AppFont.headline)
 					.lineLimit(1)
 				if let version = app.version {
 					Text(version)
-						.font(.footnote)
+						.font(AppFont.footnote)
 						.foregroundStyle(.secondary)
 				}
 			}
@@ -407,7 +410,7 @@ extension StorageAppsListView {
 
 			if let uuid = app.uuid, let size = _sizes[uuid] {
 				Text(StorageUsage.format(size))
-					.font(.subheadline)
+					.font(AppFont.subheadline)
 					.foregroundStyle(.secondary)
 			}
 		}

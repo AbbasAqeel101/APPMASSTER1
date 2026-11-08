@@ -49,6 +49,7 @@ struct AppearanceView: View {
 				}
 				.pickerStyle(.segmented)
 			}
+			.appRowBackground()
 			
 			NBSection(.localized("Theme")) {
 				AppearanceTintColorView()
@@ -63,6 +64,7 @@ struct AppearanceView: View {
 					supportsOpacity: false
 				)
 			}
+			.appRowBackground()
 			
 			if #available(iOS 18.0, *) {
 				NBSection(.localized("Library")) {

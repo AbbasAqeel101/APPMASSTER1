@@ -7,6 +7,7 @@
 
 import SwiftUI
 import NukeUI
+import NimbleViews
 
 struct ScreenshotPreviewView: View {
 	@Environment(\.dismiss) var dismiss
@@ -36,12 +37,12 @@ struct ScreenshotPreviewView: View {
 					ToolbarItem(placement: .topBarTrailing) {
 						if #available(iOS 26.0, *) {
 							Text(verbatim: "\(currentIndex + 1) / \(screenshotURLs.count)")
-								.font(.subheadline)
+								.font(AppFont.subheadline)
 								.padding(.horizontal, 12)
 								.padding(.vertical, 6)
 						} else {
 							Text(verbatim: "\(currentIndex + 1) / \(screenshotURLs.count)")
-								.font(.subheadline)
+								.font(AppFont.subheadline)
 								.padding(.horizontal, 12)
 								.padding(.vertical, 6)
 								.background(

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AltSourceKit
+import NimbleViews
 
 // MARK: - Representable
 struct SourceAppsTableRepresentableView: UIViewRepresentable {
@@ -268,7 +269,7 @@ extension SourceAppsTableRepresentableView { class Coordinator: NSObject, UITabl
 				Text(verbatim: title)
 				Spacer()
 			}
-			.font(.headline)
+			.font(AppFont.headline)
 			.padding(.vertical, 2)
 		}
 		

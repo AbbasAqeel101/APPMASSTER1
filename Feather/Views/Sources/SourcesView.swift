@@ -64,6 +64,7 @@ struct SourcesView: View {
 						}
 						.buttonStyle(.plain)
 					}
+					.appRowBackground()
 					
 					NBSection(
 						.localized("Repositories"),

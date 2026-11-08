@@ -42,6 +42,7 @@
 				.padding(.vertical, 12)
 				.buttonStyle(.plain)
 			}
+			.appRowBackground()
 		}
 	
 		@ViewBuilder
@@ -52,7 +53,7 @@
 					.foregroundStyle(.pink)
 			
 				Text(.localized("Donations"))
-					.font(.title)
+					.font(AppFont.title)
 					.bold()
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)

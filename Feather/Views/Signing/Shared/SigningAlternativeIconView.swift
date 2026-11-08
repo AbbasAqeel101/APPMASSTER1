@@ -34,7 +34,7 @@ struct SigningAlternativeIconView: View {
 					}
 				} else {
 					Text(.localized("No Icons Found."))
-						.font(.footnote)
+						.font(AppFont.footnote)
 						.foregroundColor(.disabled())
 				}
 			}
@@ -59,7 +59,7 @@ extension SigningAlternativeIconView {
 			}
 			
 			Text(icon.name)
-				.font(.headline)
+				.font(AppFont.headline)
 				.foregroundColor(.primary)
 		}
 		.padding(.vertical, 4)

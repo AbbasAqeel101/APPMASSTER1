@@ -123,7 +123,7 @@ extension ProfileView {
 
 				VStack(alignment: .leading, spacing: 4) {
 					Text(_displayName)
-						.font(.title3.bold())
+						.font(AppFont.title3.bold())
 					_subscriptionLabel()
 				}
 
@@ -131,6 +131,7 @@ extension ProfileView {
 			}
 			.padding(.vertical, 6)
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -142,17 +143,17 @@ extension ProfileView {
 				Text(.localized("Checking subscription…"))
 					.foregroundStyle(.secondary)
 			}
-			.font(.subheadline)
+			.font(AppFont.subheadline)
 		} else if let subscription = _subscription {
 			HStack(spacing: 6) {
 				Image(systemName: subscription.isActive ? "crown.fill" : "crown")
 					.foregroundStyle(subscription.isActive ? .yellow : .secondary)
 				Text(subscription.tierName)
 			}
-			.font(.subheadline)
+			.font(AppFont.subheadline)
 		} else {
 			Text(.localized("No active subscription"))
-				.font(.subheadline)
+				.font(AppFont.subheadline)
 				.foregroundStyle(.secondary)
 		}
 	}
@@ -185,6 +186,7 @@ extension ProfileView {
 				}
 			}
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -226,6 +228,7 @@ extension ProfileView {
 				Label(.localized("Help & Support"), systemImage: "questionmark.bubble")
 			}
 		}
+		.appRowBackground()
 	}
 }
 

@@ -21,6 +21,7 @@ struct LibraryInfoView: View {
 					FRAppIconView(app: app)
 						.frame(maxWidth: .infinity, alignment: .center)
 				}
+				.appRowBackground()
 				
 				_infoSection(for: app)
 				_certSection(for: app)
@@ -32,6 +33,7 @@ struct LibraryInfoView: View {
 						UIApplication.open(Storage.shared.getUuidDirectory(for: app)!.toSharedDocumentsURL()!)
 					}
 				}
+				.appRowBackground()
 			}
 			.toolbar {
 				NBToolbarButton(role: .close)

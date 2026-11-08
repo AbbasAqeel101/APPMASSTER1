@@ -181,7 +181,7 @@ extension HomeView {
 	private func _featuredSection(repo: ASRepository, apps: [ASRepository.App]) -> some View {
 		VStack(alignment: .leading, spacing: 12) {
 			Text(.localized("Featured"))
-				.font(.title2.bold())
+				.font(AppFont.title2.bold())
 				.padding(.horizontal)
 
 			TabView {
@@ -216,14 +216,14 @@ extension HomeView {
 				}
 				VStack(alignment: .leading, spacing: 4) {
 					Text(.localized("Featured App"))
-						.font(.caption)
+						.font(AppFont.caption)
 						.foregroundStyle(.white.opacity(0.85))
 					Text(app.currentName)
-						.font(.title3.bold())
+						.font(AppFont.title3.bold())
 						.foregroundStyle(.white)
 					if let subtitle = app.currentDescription {
 						Text(subtitle)
-							.font(.subheadline)
+							.font(AppFont.subheadline)
 							.foregroundStyle(.white.opacity(0.9))
 							.lineLimit(2)
 					}
@@ -239,7 +239,7 @@ extension HomeView {
 	private func _appRow(repo: ASRepository, title: String, apps: [ASRepository.App]) -> some View {
 		VStack(alignment: .leading, spacing: 12) {
 			Text(title)
-				.font(.title3.bold())
+				.font(AppFont.title3.bold())
 				.padding(.horizontal)
 
 			ScrollView(.horizontal, showsIndicators: false) {
@@ -274,7 +274,7 @@ extension HomeView {
 			}
 
 			Text(app.currentName)
-				.font(.footnote.weight(.medium))
+				.font(AppFont.footnote.weight(.medium))
 				.lineLimit(1)
 				.frame(width: 90, alignment: .leading)
 		}
@@ -285,7 +285,7 @@ extension HomeView {
 		VStack(spacing: 12) {
 			ProgressView()
 			Text(.localized("Loading apps…"))
-				.font(.subheadline)
+				.font(AppFont.subheadline)
 				.foregroundStyle(.secondary)
 		}
 		.frame(maxWidth: .infinity)
@@ -299,9 +299,9 @@ extension HomeView {
 				.font(.system(size: 40))
 				.foregroundStyle(.secondary)
 			Text(.localized("No apps yet"))
-				.font(.headline)
+				.font(AppFont.headline)
 			Text(.localized("Apps you feature or categorize on the dashboard will show up here."))
-				.font(.subheadline)
+				.font(AppFont.subheadline)
 				.foregroundStyle(.secondary)
 				.multilineTextAlignment(.center)
 				.padding(.horizontal, 40)

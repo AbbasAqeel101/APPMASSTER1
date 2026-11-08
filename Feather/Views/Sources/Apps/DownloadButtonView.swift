@@ -39,7 +39,7 @@ struct DownloadButtonView: View {
 
 					Image(systemName: downloadProgress >= 0.75 ? "archivebox" : "square.fill")
 						.foregroundStyle(.tint)
-						.font(.footnote).bold()
+						.font(AppFont.footnote).bold()
 				}
 				.onTapGesture {
 					if downloadProgress <= 0.75 {
@@ -48,7 +48,7 @@ struct DownloadButtonView: View {
 				}
 				.compatTransition()
 			} else {
-				HStack(spacing: compact ? 6 : 8) {
+				HStack(spacing: compact ? 5 : 6) {
 					Button {
 						if let url = app.currentDownloadUrl {
 							// AppMaster: one tap = download -> sign -> install.
@@ -69,15 +69,26 @@ struct DownloadButtonView: View {
 					.buttonStyle(.borderless)
 
 					Button {
-						if let url = app.currentDownloadUrl {
-							// download, then open the signing screen for this app
-							_ = OneTapInstaller.shared.begin(name: app.currentName, customize: true)
+						// the signing screen opens right away (nothing is downloaded yet);
+						// "Install" there starts download -> sign -> install in the background
+						let installer = OneTapInstaller.shared
+						let manager = DownloadManager.shared
+						let provenance = _sourceProvenance()
+						let target = app
+						installer.pendingCustomize = PendingCustomize(
+							name: app.currentName,
+							identifier: app.id,
+							version: app.currentVersion,
+							iconURL: app.iconURL
+						) { customization in
+							guard let url = target.currentDownloadUrl else { return }
+							let autoInstall = installer.begin(name: target.currentName, customization: customization)
 							DownloadCounter.report(url: url)
-							_ = downloadManager.startDownload(
+							_ = manager.startDownload(
 								from: url,
-								id: app.currentUniqueId,
-								sourceProvenance: _sourceProvenance(),
-								autoInstall: true
+								id: target.currentUniqueId,
+								sourceProvenance: provenance,
+								autoInstall: autoInstall
 							)
 						}
 					} label: {
@@ -101,11 +112,11 @@ struct DownloadButtonView: View {
 		Text(title)
 			.lineLimit(1)
 			.minimumScaleFactor(0.8)
-			.font((compact ? Font.subheadline : Font.headline).bold())
+			.font(AppFont.footnote.bold())
 			.foregroundStyle(Color.accentColor)
-			.padding(.horizontal, compact ? 12 : 20)
-			.padding(.vertical, compact ? 5 : 6)
-			.background(Color(uiColor: prominent ? .quaternarySystemFill : .quaternarySystemFill).opacity(prominent ? 1 : 0.6))
+			.padding(.horizontal, compact ? 10 : 14)
+			.padding(.vertical, compact ? 3 : 5)
+			.background(AppTheme.pill.opacity(prominent ? 1 : 0.7))
 			.clipShape(Capsule())
 	}
 

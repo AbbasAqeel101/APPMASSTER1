@@ -16,6 +16,7 @@
 import SwiftUI
 import CoreData
 import UIKit
+import NimbleViews
 
 final class OneTapInstaller: ObservableObject {
 	static let shared = OneTapInstaller()
@@ -39,6 +40,16 @@ final class OneTapInstaller: ObservableObject {
 		}
 	}
 	private var _customizeMode = false
+
+	/// "Customize": the signing options the person chose BEFORE the download starts.
+	struct Customization {
+		var options: Options
+		var icon: UIImage?
+		var certificate: CertificatePair?
+	}
+	/// Presented full screen (before anything is downloaded) when the person taps "Customize".
+	@Published var pendingCustomize: PendingCustomize?
+	private var _customization: Customization?
 	/// 0...1 while the IPA downloads, plus a "12 MB / 32 MB · 3 MB/s" line for the toast.
 	@Published private(set) var downloadFraction: Double = 0
 	@Published private(set) var downloadDetail: String = ""
@@ -76,12 +87,23 @@ final class OneTapInstaller: ObservableObject {
 		return true
 	}
 
+	/// Same as `begin`, but the app is signed with what the person chose on the customize screen.
+	@discardableResult
+	func begin(name: String, customization: Customization) -> Bool {
+		_customization = customization
+		let ok = begin(name: name)
+		if !ok { _customization = nil }
+		return ok
+	}
+
 	func reset() {
 		_customizeMode = false
+		_customization = nil
 		_set(.idle)
 	}
 
 	func fail(_ message: String) {
+		_customization = nil
 		_stopBackgroundKeepAlive()
 		_set(.failed(message), hideAfter: 6)
 	}
@@ -171,7 +193,10 @@ final class OneTapInstaller: ObservableObject {
 	// MARK: Signing
 
 	private var _canSign: Bool {
-		_defaultCertificate() != nil || OptionsManager.shared.options.signingOption != .default
+		if let custom = _customization {
+			return custom.certificate != nil || custom.options.signingOption != .default
+		}
+		return _defaultCertificate() != nil || OptionsManager.shared.options.signingOption != .default
 	}
 
 	private func _defaultCertificate() -> CertificatePair? {
@@ -181,9 +206,12 @@ final class OneTapInstaller: ObservableObject {
 
 	private func _sign(_ app: Imported) {
 		let name = app.name ?? ""
-		let certificate = _defaultCertificate()
+		let custom = _customization
+		_customization = nil
+		let certificate = custom?.certificate ?? _defaultCertificate()
+		let baseOptions = custom?.options ?? OptionsManager.shared.options
 
-		guard certificate != nil || OptionsManager.shared.options.signingOption != .default else {
+		guard certificate != nil || baseOptions.signingOption != .default else {
 			fail(.localized("Please go to settings and import a valid certificate"))
 			return
 		}
@@ -192,9 +220,12 @@ final class OneTapInstaller: ObservableObject {
 		_startBackgroundKeepAlive()
 
 		// Same rules the manual signing screen applies before "Start Signing"
-		var options = OptionsManager.shared.options
+		var options = baseOptions
+		// an identifier typed on the customize screen is kept as it is
+		let customIdentifier = custom != nil && (options.appIdentifier ?? "").isEmpty == false
 
 		if
+			!customIdentifier,
 			options.ppqProtection,
 			let identifier = app.identifier,
 			let certificate,
@@ -204,6 +235,7 @@ final class OneTapInstaller: ObservableObject {
 		}
 
 		if
+			!customIdentifier,
 			let current = app.identifier,
 			let custom = options.identifiers[current]
 		{
@@ -211,6 +243,7 @@ final class OneTapInstaller: ObservableObject {
 		}
 
 		if
+			(options.appName ?? "").isEmpty,
 			let current = app.name,
 			let custom = options.displayNames[current]
 		{
@@ -220,6 +253,7 @@ final class OneTapInstaller: ObservableObject {
 		// A profile with an explicit App ID only installs an app that uses exactly that
 		// identifier, so use the certificate's identifier automatically.
 		if
+			!customIdentifier,
 			let certificate,
 			let certificateIdentifier = Storage.shared.getCertificateAppIdentifier(for: certificate)
 		{
@@ -231,7 +265,7 @@ final class OneTapInstaller: ObservableObject {
 		FR.signPackageFile(
 			app,
 			using: finalOptions,
-			icon: nil,
+			icon: custom?.icon,
 			certificate: certificate
 		) { [weak self] error in
 			guard let self else { return }
@@ -349,13 +383,13 @@ struct OneTapToastView: View {
 				HStack(spacing: 12) {
 					VStack(alignment: .leading, spacing: 2) {
 						Text(content.text)
-							.font(.subheadline.weight(.semibold))
+							.font(AppFont.subheadline.weight(.semibold))
 							.lineLimit(1)
 							.truncationMode(.tail)
 
 						if _isDownloading, !_installer.downloadDetail.isEmpty {
 							Text(_installer.downloadDetail)
-								.font(.caption)
+								.font(AppFont.caption)
 								.foregroundStyle(.secondary)
 								.lineLimit(1)
 						}
@@ -370,7 +404,7 @@ struct OneTapToastView: View {
 						ProgressView()
 					} else if let icon = content.icon {
 						Image(systemName: icon)
-							.font(.body)
+							.font(AppFont.body)
 					}
 				}
 				.padding(.horizontal, 20)
@@ -384,4 +418,16 @@ struct OneTapToastView: View {
 		.animation(.smooth, value: _installer.phase)
 		.allowsHitTesting(false)
 	}
+}
+
+
+// MARK: - Customize (before the download)
+struct PendingCustomize: Identifiable {
+	let id = UUID()
+	let name: String
+	let identifier: String?
+	let version: String?
+	let iconURL: URL?
+	/// Called when the person taps "Install" on the customize screen.
+	let start: (OneTapInstaller.Customization) -> Void
 }

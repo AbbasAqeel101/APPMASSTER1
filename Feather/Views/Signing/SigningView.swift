@@ -197,7 +197,7 @@ extension SigningView {
 				}
 			} else {
 				Text(.localized("No Certificate"))
-					.font(.footnote)
+					.font(AppFont.footnote)
 					.foregroundColor(.disabled())
 			}
 		}

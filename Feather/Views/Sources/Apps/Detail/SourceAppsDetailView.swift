@@ -19,6 +19,7 @@ struct SourceAppsDetailView: View {
 	@State var cancellable: AnyCancellable? // Combine
 	@State private var _isScreenshotPreviewPresented: Bool = false
 	@State private var _selectedScreenshotIndex: Int = 0
+	@State private var _showEnglish: Bool = false
 	
 	var currentDownload: Download? {
 		downloadManager.getDownload(by: app.currentUniqueId)
@@ -35,11 +36,11 @@ struct SourceAppsDetailView: View {
 			}
 			
 			VStack(alignment: .leading, spacing: 10) {
-				HStack(spacing: 10) {
+				HStack(alignment: .center, spacing: 14) {
 					if let iconURL = app.iconURL {
 						LazyImage(url: iconURL) { state in
 							if let image = state.image {
-								image.appIconStyle(size: 111, isCircle: false)
+								image.appIconStyle(size: 96, isCircle: false)
 							} else {
 								standardIcon
 							}
@@ -48,33 +49,36 @@ struct SourceAppsDetailView: View {
 						standardIcon
 					}
 
-					ZStack(alignment: .bottomLeading) {
+					VStack(alignment: .leading, spacing: 5) {
 						Text(app.currentName)
-							.font(.title2)
-							.fontWeight(.semibold)
+							.font(AppFont.title3)
 							.foregroundColor(.primary)
 							.lineLimit(2)
-							.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-							.padding(.bottom, 12)
-						
+							.frame(maxWidth: .infinity, alignment: .leading)
+
+						// latest version, right under the name
+						_versionLine()
+
 						DownloadButtonView(sourceURL: sourceURL, source: source, app: app)
+							.padding(.top, 2)
 					}
-					.frame(height: 111)
 					.frame(maxWidth: .infinity, alignment: .leading)
 				}
-				
+
 				Divider()
 				_infoPills(app: app)
 				Divider()
                 
-				if let screenshotURLs = app.screenshotURLs {
+				_descriptionSection()
+
+				if let screenshotURLs = app.screenshotURLs, !screenshotURLs.isEmpty {
 					NBSection(.localized("Screenshots")) {
 						_screenshots(screenshotURLs: screenshotURLs)
 					}
-                    
+
 					Divider()
 				}
-				
+
 				if
 					let currentVer = app.currentVersion,
 					let whatsNewDesc = app.currentAppVersion?.localizedDescription
@@ -104,17 +108,6 @@ struct SourceAppsDetailView: View {
 					Divider()
 				}
 				
-				if let appDesc = app.localizedDescription {
-					NBSection(.localized("Description")) {
-						VStack(alignment: .leading, spacing: 2) {
-							ExpandableText(text: appDesc, lineLimit: 3)
-						}
-						.frame(maxWidth: .infinity, alignment: .leading)
-					}
-					
-					Divider()
-				}
-                
 				NBSection(.localized("Information")) {
 					VStack(spacing: 12) {
 						if let sourceName = source.name {
@@ -157,7 +150,7 @@ struct SourceAppsDetailView: View {
 								)
 							} else {
 								Text(.localized("No Entitlements listed."))
-									.font(.subheadline)
+									.font(AppFont.subheadline)
 									.foregroundStyle(.secondary)
 							}
 							if let privacyItems = appPermissions.privacy {
@@ -169,14 +162,14 @@ struct SourceAppsDetailView: View {
 								}
 							} else {
 								Text(.localized("No Privacy Permissions listed."))
-									.font(.subheadline)
+									.font(AppFont.subheadline)
 									.foregroundStyle(.secondary)
 							}
 						}
 						.padding()
 						.background(
 							RoundedRectangle(cornerRadius: 18, style: .continuous)
-								.fill(Color(.quaternarySystemFill))
+								.fill(AppTheme.pill)
 						)
 					}
 				}
@@ -231,7 +224,7 @@ struct SourceAppsDetailView: View {
 	}
 	
 	var standardIcon: some View {
-		Image("App_Unknown").appIconStyle(size: 111, isCircle: false)
+		Image("App_Unknown").appIconStyle(size: 96, isCircle: false)
 	}
 	
 	var standardHeader: some View {
@@ -298,24 +291,114 @@ extension SourceAppsDetailView {
 	
 	private func _buildPills(from app: ASRepository.App) -> [NBPillItem] {
 		var pills: [NBPillItem] = []
-		
-		if let version = app.currentVersion {
-			pills.append(NBPillItem(title: version, icon: "tag", color: Color.accentColor))
-		}
-		
-		pills.append(NBPillItem(title: "\(app.downloads ?? 0)", icon: "arrow.down.circle", color: .secondary))
-		
+		let tint = Color.accentColor
+
+		pills.append(NBPillItem(title: "\(app.downloads ?? 0)", icon: "arrow.down.circle", color: tint))
+
 		if let size = app.size {
-			pills.append(NBPillItem(title: size.formattedByteCount, icon: "archivebox", color: .secondary))
+			pills.append(NBPillItem(title: size.formattedByteCount, icon: "archivebox", color: tint))
 		}
-		
+
+		if let minOS = app.currentAppVersion?.minOSVersion {
+			pills.append(NBPillItem(title: "iOS \(minOS.description)+", icon: "iphone", color: tint))
+		}
+
 		if let category = app.category, !category.isEmpty {
-			pills.append(NBPillItem(title: category, icon: "square.grid.2x2", color: .secondary))
+			pills.append(NBPillItem(title: category, icon: "square.grid.2x2", color: tint))
 		}
-		
+
 		return pills
 	}
-	
+
+	/// "Version 249.0 • 6 hours ago"
+	@ViewBuilder
+	private func _versionLine() -> some View {
+		let parts = _versionParts()
+		if !parts.isEmpty {
+			Text(parts.joined(separator: "  •  "))
+				.font(AppFont.footnote)
+				.foregroundStyle(.secondary)
+				.lineLimit(1)
+				.frame(maxWidth: .infinity, alignment: .leading)
+		}
+	}
+
+	private func _versionParts() -> [String] {
+		var parts: [String] = []
+		if let version = app.currentVersion, !version.isEmpty {
+			parts.append(String.localized("Version") + " " + version)
+		}
+		if let date = app.currentDate?.date {
+			let formatter = RelativeDateTimeFormatter()
+			formatter.unitsStyle = .full
+			formatter.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+			parts.append(formatter.localizedString(for: date, relativeTo: Date()))
+		}
+		return parts
+	}
+
+	private var _arabicDescription: String? {
+		let value = (app.localizedDescription ?? app.description ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+		return value.isEmpty ? nil : value
+	}
+
+	private var _englishDescription: String? {
+		let value = (app.descriptionEN ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+		return value.isEmpty ? nil : value
+	}
+
+	@ViewBuilder
+	private func _descriptionSection() -> some View {
+		let arabic = _arabicDescription
+		let english = _englishDescription
+
+		if arabic != nil || english != nil {
+			let showEnglish = (_showEnglish && english != nil) || arabic == nil
+			let text = (showEnglish ? english : arabic) ?? ""
+
+			VStack(alignment: .leading, spacing: 8) {
+				HStack {
+					Text(.localized("Description"))
+						.font(AppFont.title2)
+
+					Spacer()
+
+					if arabic != nil, english != nil {
+						_languageSwitch(showEnglish: showEnglish)
+					}
+				}
+
+				ExpandableText(text: text, lineLimit: 3)
+					.id(showEnglish)
+					.frame(maxWidth: .infinity, alignment: .leading)
+			}
+
+			Divider()
+		}
+	}
+
+	@ViewBuilder
+	private func _languageSwitch(showEnglish: Bool) -> some View {
+		HStack(spacing: 2) {
+			_languageButton("AR", isSelected: !showEnglish) { _showEnglish = false }
+			_languageButton("EN", isSelected: showEnglish) { _showEnglish = true }
+		}
+		.padding(2)
+		.background(AppTheme.pill, in: Capsule())
+	}
+
+	@ViewBuilder
+	private func _languageButton(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+		Text(verbatim: title)
+			.font(AppFont.caption.bold())
+			.foregroundStyle(isSelected ? Color.white : Color.secondary)
+			.padding(.horizontal, 12)
+			.padding(.vertical, 4)
+			.background(Capsule().fill(isSelected ? Color.accentColor : Color.clear))
+			.contentShape(Capsule())
+			.onTapGesture(perform: action)
+	}
+
 	@ViewBuilder
 	private func _infoRow(title: String, value: String) -> some View {
 		LabeledContent(title, value: value)
@@ -334,8 +417,8 @@ extension SourceAppsDetailView {
 								.resizable()
 								.aspectRatio(contentMode: .fit)
 								.frame(
-									maxWidth: UIScreen.main.bounds.width - 32,
-									maxHeight: 400
+									maxWidth: UIScreen.main.bounds.width * 0.62,
+									maxHeight: 380
 								)
 								.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 								.overlay {

@@ -174,13 +174,13 @@ struct CatalogChipsBar: View {
 	@ViewBuilder
 	private func _chip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
 		Text(verbatim: title)
-			.font(.subheadline.weight(.semibold))
+			.font(AppFont.subheadline.weight(.semibold))
 			.lineLimit(1)
 			.foregroundStyle(isSelected ? Color.white : Color(uiColor: .label))
 			.padding(.horizontal, 16)
 			.padding(.vertical, 9)
 			.background(
-				Capsule().fill(isSelected ? Color.accentColor : Color(uiColor: .tertiarySystemFill))
+				Capsule().fill(isSelected ? Color.accentColor : AppTheme.pill)
 			)
 			.contentShape(Capsule())
 			.onTapGesture(perform: action)

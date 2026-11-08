@@ -98,6 +98,7 @@ struct SourcesAddView: View {
 				} footer: {
 					Text(.localized("Supports importing from KravaSign/MapleSign and ESign."))
 				}
+				.appRowBackground()
 				
 				if !_filteredRecommendedSourcesData.isEmpty {
 					NBSection(.localized("Featured")) {

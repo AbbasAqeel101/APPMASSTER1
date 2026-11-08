@@ -9,6 +9,7 @@ import SwiftUI
 import Nuke
 import IDeviceSwift
 import OSLog
+import NimbleViews
 
 @main
 struct FeatherApp: App {
@@ -57,6 +58,9 @@ struct FeatherApp: App {
 			}
 			.environment(\.locale, _locale)
 			.environment(\.layoutDirection, _layoutDirection)
+			// the platform font ("عام الحرف اليدوية") for every text without its own font
+			.environment(\.font, AppFont.body)
+			.background(AppTheme.background.ignoresSafeArea())
 			.animation(.smooth, value: downloadManager.manualDownloads.description)
 			// one-tap install: status capsule + the install sheet that opens the iOS prompt
 			.overlay(alignment: .bottom) {
@@ -69,8 +73,8 @@ struct FeatherApp: App {
 					.presentationDetents([.height(200)])
 					.presentationDragIndicator(.visible)
 			}
-			.fullScreenCover(item: $oneTapInstaller.customizeApp) { app in
-				SigningView(app: app.base)
+			.fullScreenCover(item: $oneTapInstaller.pendingCustomize) { pending in
+				CustomizeBeforeInstallView(pending: pending)
 			}
 			.onReceive(NotificationCenter.default.publisher(for: .heartbeatInvalidHost)) { _ in
 				DispatchQueue.main.async {
@@ -202,6 +206,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
 	) -> Bool {
 		Bundle.applyStoredLanguageOverrideIfNeeded()
+		AppFont.register()
+		AppFont.applyUIKitAppearance()
 		_createPipeline()
 		_createDocumentsDirectories()
 		ResetView.clearWorkCache()

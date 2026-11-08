@@ -54,7 +54,7 @@ public struct NBSection<Content, Footer>: View
 					
 				Text(_headerText)
 					.fontWeight(.bold)
-					.font(.title2)
+					.font(AppFont.title2)
 					.foregroundStyle(.primary)
 						
 					
@@ -63,7 +63,7 @@ public struct NBSection<Content, Footer>: View
 				if let _headerTextSecondary {
 					if #available(iOS 26.0, *) {
 						Text(_headerTextSecondary)
-							.font(.caption)
+							.font(AppFont.caption)
 							.foregroundStyle(.secondary)
 							.contentTransition(.numericText())
 							.padding(.horizontal, 8)
@@ -73,7 +73,7 @@ public struct NBSection<Content, Footer>: View
 							.glassEffect()
 					} else {
 						Text(_headerTextSecondary)
-							.font(.caption)
+							.font(AppFont.caption)
 							.foregroundStyle(.secondary)
 							.contentTransition(.numericText())
 							.padding(.horizontal, 8)
@@ -86,11 +86,12 @@ public struct NBSection<Content, Footer>: View
 			.offset(y: 2)
 			,
 			footer: _footer
-				.font(.caption)
+				.font(AppFont.caption)
 				.foregroundColor(.secondary)
 		) {
 			_content
 		}
+		.listRowBackground(AppTheme.row)
 		.headerProminence(.increased)
 	}
 }

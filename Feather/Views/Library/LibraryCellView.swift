@@ -58,7 +58,7 @@ struct LibraryCellView: View {
 				} label: {
 					Image(systemName: _isSelected ? "checkmark.circle.fill" : "circle")
 						.foregroundColor(_isSelected ? .accentColor : .secondary)
-						.font(.title2)
+						.font(AppFont.title2)
 				}
 				.buttonStyle(.borderless)
 			}
@@ -79,7 +79,7 @@ struct LibraryCellView: View {
 		.background(
 			isRegular
 				? RoundedRectangle(cornerRadius: 18, style: .continuous)
-				.fill(_isSelected && isEditing ? Color.accentColor.opacity(0.1) : Color(.quaternarySystemFill))
+				.fill(_isSelected && isEditing ? Color.accentColor.opacity(0.1) : AppTheme.pill)
 				: nil
 		)
 		.contentShape(Rectangle())

@@ -24,6 +24,7 @@ struct ConfigurationDictView: View {
 						_actions(key: key)
 					}
 				}
+				.appRowBackground()
 			}
 		}
 		.toolbar {

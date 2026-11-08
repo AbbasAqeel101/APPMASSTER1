@@ -185,6 +185,7 @@ extension SourceAppsView {
 				_sortButton(for: opt)
 			}
 		}
+		.appRowBackground()
 	}
 	
 	private func _sortButton(for option: SortOption) -> some View {

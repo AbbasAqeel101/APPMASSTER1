@@ -34,10 +34,10 @@ public struct NBPillView: View {
 		
 		HStack(spacing: 4) {
 			Image(systemName: icon)
-				.font(.caption)
+				.font(AppFont.caption)
 				.foregroundStyle(color.opacity(0.9))
 			Text(title)
-				.font(.caption.bold())
+				.font(AppFont.caption.bold())
 		}
 		.frame(maxWidth: .infinity)
 		.padding(.vertical, 10)

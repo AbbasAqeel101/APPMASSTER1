@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import NimbleViews
 
 // MARK: - View
 struct FRExpirationPillView: View {
@@ -28,7 +29,7 @@ struct FRExpirationPillView: View {
 		
 		Text(textLabel)
 			.lineLimit(0)
-			.font(.headline.bold())
+			.font(AppFont.headline.bold())
 			.foregroundStyle(textForeground)
 			.padding(.horizontal, 12)
 			.padding(.vertical, 6)

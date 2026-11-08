@@ -46,6 +46,7 @@ struct CertificatesAddView: View {
 				Section {
 					TextField(.localized("Nickname (Optional)"), text: $_certificateName)
 				}
+				.appRowBackground()
 			}
 			.toolbar {
 				NBToolbarButton(role: .cancel)

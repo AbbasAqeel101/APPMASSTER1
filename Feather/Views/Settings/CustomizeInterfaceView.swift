@@ -50,6 +50,7 @@ struct CustomizeInterfaceView: View {
 				.pickerStyle(.segmented)
 				.listRowBackground(Color.clear)
 			}
+			.appRowBackground()
 
 			Section {
 				ForEach(chips) { chip in
@@ -64,6 +65,7 @@ struct CustomizeInterfaceView: View {
 					for index in offsets { _prefs.remove(key: chips[index].key) }
 				}
 			}
+			.appRowBackground()
 
 			if !hidden.isEmpty {
 				Section(header: Text(.localized("Hidden"))) {
@@ -75,6 +77,7 @@ struct CustomizeInterfaceView: View {
 						}
 					}
 				}
+				.appRowBackground()
 			}
 
 			Section {
@@ -84,6 +87,7 @@ struct CustomizeInterfaceView: View {
 					Text(.localized("Reset"))
 				}
 			}
+			.appRowBackground()
 		}
 		.environment(\.editMode, $_editMode)
 		.navigationTitle(.localized("Customize Interface"))

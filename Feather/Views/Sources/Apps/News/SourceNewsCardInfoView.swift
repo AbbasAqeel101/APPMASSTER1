@@ -51,13 +51,13 @@ struct SourceNewsCardInfoView: View {
 					
 					VStack(alignment: .leading, spacing: 12) {
 						Text(new.title)
-							.font(.title.bold())
+							.font(AppFont.title.bold())
 							.foregroundStyle(.tint)
 							.multilineTextAlignment(.leading)
 						
 						if !new.caption.isEmpty {
 							Text(new.caption)
-								.font(.body)
+								.font(AppFont.body)
 								.foregroundStyle(.secondary)
 								.multilineTextAlignment(.leading)
 						}
@@ -73,7 +73,7 @@ struct SourceNewsCardInfoView: View {
 						
 						if let date = new.date?.date {
 							Text(date.formatted(date: .abbreviated, time: .omitted))
-								.font(.footnote)
+								.font(AppFont.footnote)
 								.foregroundStyle(.secondary)
 						}
 					}

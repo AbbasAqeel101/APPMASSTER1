@@ -67,6 +67,7 @@ struct ServerView: View {
 				Toggle(.localized("Only use localhost address"), systemImage: "lifepreserver", isOn: $_ipFix)
 					.disabled(_serverMethod != 1)
 			}
+			.appRowBackground()
 			
 			Section {
 				Button(.localized("Update SSL Certificates"), systemImage: "arrow.down.doc") {
@@ -89,6 +90,7 @@ struct ServerView: View {
 					}
 				}
 			}
+			.appRowBackground()
 		}
 	}
 }

@@ -93,7 +93,7 @@ struct CatalogSearchLanding: View {
 	private func _suggestionsSection() -> some View {
 		VStack(alignment: .leading, spacing: 8) {
 			Text(.localized("Suggestions"))
-				.font(.title2.bold())
+				.font(AppFont.title2.bold())
 				.padding(.horizontal)
 			VStack(spacing: 0) {
 				ForEach(_suggestions) { entry in
@@ -110,7 +110,7 @@ struct CatalogSearchLanding: View {
 	private func _browseSection() -> some View {
 		VStack(alignment: .leading, spacing: 12) {
 			Text(.localized("Browse"))
-				.font(.title2.bold())
+				.font(AppFont.title2.bold())
 				.padding(.horizontal)
 			LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
 				ForEach(_tiles) { tile in
@@ -136,7 +136,7 @@ struct CatalogSearchLanding: View {
 				.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 				.padding(12)
 			Text(verbatim: tile.title)
-				.font(.headline.bold())
+				.font(AppFont.headline.bold())
 				.foregroundStyle(.white)
 				.multilineTextAlignment(.leading)
 				.lineLimit(3)

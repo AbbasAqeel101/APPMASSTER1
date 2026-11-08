@@ -52,6 +52,7 @@ struct SigningOptionsView: View {
 				values: Options.SigningOption.allCases
 			)
 		}
+		.appRowBackground()
 		
 		if (temporaryOptions == nil) {
 			NBSection(.localized("Tweaks")) {
@@ -143,6 +144,7 @@ struct SigningOptionsView: View {
 		} footer: {
 			Text(.localized("By default, localized titles for the app won't be changed, however this option overrides it."))
 		}
+		.appRowBackground()
 		
 		NBSection(.localized("Post Signing")) {
 			_toggle(

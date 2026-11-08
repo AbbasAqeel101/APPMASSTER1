@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import NimbleViews
 
 struct AppVersionInfo: View {
 	let version: String
@@ -26,14 +27,14 @@ struct AppVersionInfo: View {
 		VStack(alignment: .leading, spacing: 2) {
 			HStack {
 				Text("Version \(version)")
-					.font(.subheadline)
+					.font(AppFont.subheadline)
 					.foregroundStyle(.secondary)
                 
 				Spacer()
                 
 				if let date {
 					Text(date.formatted(.relative(presentation: .named)))
-						.font(.subheadline)
+						.font(AppFont.subheadline)
 						.foregroundStyle(.secondary)
 				}
 			}

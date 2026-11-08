@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import NimbleViews
 
 // MARK: - View
 struct AppearanceTintColorView: View {
@@ -46,7 +47,7 @@ struct AppearanceTintColorView: View {
 							)
 
 						Text(option.name)
-							.font(.subheadline)
+							.font(AppFont.subheadline)
 							.foregroundColor(.secondary)
 					}
 					.frame(width: 120, height: 100)

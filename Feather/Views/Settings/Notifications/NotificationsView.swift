@@ -143,6 +143,7 @@ extension NotificationsView {
 		} footer: {
 			Text(.localized("Enable notifications to receive updates"))
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -152,6 +153,7 @@ extension NotificationsView {
 				_row(item)
 			}
 		}
+		.appRowBackground()
 	}
 
 	@ViewBuilder
@@ -178,17 +180,17 @@ extension NotificationsView {
 
 			VStack(alignment: .leading, spacing: 4) {
 				Text(item.title)
-					.font(.headline)
+					.font(AppFont.headline)
 
 				if let body = item.body, !body.isEmpty {
 					Text(body)
-						.font(.subheadline)
+						.font(AppFont.subheadline)
 						.foregroundStyle(.secondary)
 				}
 
 				if let date = item.date {
 					Text(date, style: .relative)
-						.font(.caption)
+						.font(AppFont.caption)
 						.foregroundStyle(.tertiary)
 				}
 			}

@@ -27,6 +27,7 @@ struct CertificatesInfoView: View {
 						.frame(width: 107, height: 107)
 						.frame(maxWidth: .infinity, alignment: .center)
 				}
+				.appRowBackground()
 				
 				if let data {
 					_infoSection(data: data)
@@ -39,6 +40,7 @@ struct CertificatesInfoView: View {
 						UIApplication.open(Storage.shared.getUuidDirectory(for: cert)!.toSharedDocumentsURL()!)
 					}
 				}
+				.appRowBackground()
 			}
 			.toolbar {
 				NBToolbarButton(role: .close)
@@ -70,6 +72,7 @@ extension CertificatesInfoView {
 				_info(.localized("PPQCheck"), description: ppq ? "✓" : "✗")
 			}
 		}
+		.appRowBackground()
 	}
 	
 	@ViewBuilder
@@ -80,6 +83,7 @@ extension CertificatesInfoView {
 					CertificatesInfoEntitlementView(entitlements: entitlements)
 				}
 			}
+			.appRowBackground()
 		}
 	}
 	

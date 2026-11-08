@@ -47,6 +47,7 @@ struct BackupRestoreView: View {
 			} footer: {
 				Text(.localized("Adds your signed and imported apps to the backup. The file can be several GB, so keep enough free space."))
 			}
+			.appRowBackground()
 
 			Section {
 				Button {
@@ -73,6 +74,7 @@ struct BackupRestoreView: View {
 			} footer: {
 				Text(.localized("A backup always contains your app settings and sources. Certificates are never included."))
 			}
+			.appRowBackground()
 		}
 		.sheet(isPresented: $_isImporterPresenting) {
 			// Same UIKit picker the Library uses for IPA files (it works on device).

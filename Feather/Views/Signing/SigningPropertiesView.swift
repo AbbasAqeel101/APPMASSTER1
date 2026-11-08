@@ -33,6 +33,7 @@ struct SigningPropertiesView: View {
 				TextField(initialValue, text: $text)
 					.textInputAutocapitalization(.none)
 			}
+			.appRowBackground()
 			
 			if let certificateIdentifier {
 				Section {
@@ -44,6 +45,7 @@ struct SigningPropertiesView: View {
 				} footer: {
 					Text(String.localized("Use %@ from the selected provisioning profile.", arguments: certificateIdentifier))
 				}
+				.appRowBackground()
 			}
 		}
 		.toolbar {

@@ -55,6 +55,7 @@ struct SettingsView: View {
 						Label(.localized("App Icon"), systemImage: "app.badge")
 					}
 				}
+				.appRowBackground()
                 
 				NBSection(.localized("Certificates")) {
                     
@@ -62,7 +63,7 @@ struct SettingsView: View {
 						CertificatesCellView(cert: cert)
 					} else {
 						Text(.localized("No Certificate"))
-							.font(.footnote)
+							.font(AppFont.footnote)
 							.foregroundColor(.disabled())
 					}
 					NavigationLink(destination: CertificatesView()) {
@@ -96,6 +97,7 @@ struct SettingsView: View {
 				} footer: {
 					Text(.localized("Reset the applications sources, certificates, apps, and general contents."))
 				}
+				.appRowBackground()
 			}
 		}
 	}
@@ -135,6 +137,7 @@ extension SettingsView {
 		} footer: {
 			Text(.localized("If any issues occur within the app please report it via the GitHub repository. When submitting an issue, make sure to submit detailed information."))
 		}
+		.appRowBackground()
 	}
     
 	@ViewBuilder

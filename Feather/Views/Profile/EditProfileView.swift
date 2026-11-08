@@ -31,6 +31,7 @@ struct EditProfileView: View {
 			Section(.localized("Name")) {
 				TextField(.localized("Name"), text: $_profileName)
 			}
+			.appRowBackground()
 
 			_referralSection()
 		}
@@ -67,7 +68,7 @@ extension EditProfileView {
 						AppMasterProfile.deletePhoto()
 						_photoVersion += 1
 					}
-					.font(.footnote)
+					.font(AppFont.footnote)
 				}
 			}
 			.frame(maxWidth: .infinity)
@@ -80,7 +81,7 @@ extension EditProfileView {
 	private func _referralSection() -> some View {
 		Section {
 			Text(AppMasterProfile.referralLink)
-				.font(.footnote.monospaced())
+				.font(AppFont.footnote.monospaced())
 				.foregroundStyle(.secondary)
 				.textSelection(.enabled)
 
@@ -107,5 +108,6 @@ extension EditProfileView {
 		} footer: {
 			Text(.localized("Share this link with other people."))
 		}
+		.appRowBackground()
 	}
 }

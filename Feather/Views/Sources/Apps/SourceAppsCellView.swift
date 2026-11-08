@@ -47,7 +47,7 @@ struct SourceAppsCellView: View {
 			{
 				Text(desc)
 					.frame(maxWidth: .infinity, alignment: .leading)
-					.font(.subheadline)
+					.font(AppFont.subheadline)
 					.foregroundStyle(.secondary)
 					.padding(.top, 2)
 			}

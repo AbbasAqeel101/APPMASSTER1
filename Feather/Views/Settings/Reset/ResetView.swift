@@ -79,6 +79,7 @@ extension ResetView {
 				}
 			}
 		}
+		.appRowBackground()
 	}
 	
 	@ViewBuilder
@@ -120,6 +121,7 @@ extension ResetView {
 				}
 			}
 		}
+		.appRowBackground()
 	}
 	
 	@ViewBuilder
@@ -137,6 +139,7 @@ extension ResetView {
 				}
 			}
 		}
+		.appRowBackground()
 		.foregroundStyle(.red)
 	}
 }

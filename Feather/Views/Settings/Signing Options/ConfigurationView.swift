@@ -35,6 +35,7 @@ struct ConfigurationView: View {
 			}footer: {
 				Text(.localized("This allows you to set rules for automatically replacing the Bundle ID/Display Name when signing an app."))
 			}
+			.appRowBackground()
 			SigningOptionsView(options: $_optionsManager.options)
 		}
 		.toolbar {
@@ -67,6 +68,7 @@ extension ConfigurationView {
 				UIPasteboard.general.string = _optionsManager.options.ppqString
 			}
 		}
+		.appRowBackground()
 	}
 	
 	@ViewBuilder

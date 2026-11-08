@@ -29,6 +29,7 @@ struct ConfigurationDictAddView: View {
 				TextField(.localized("Value"), text: $_newKey)
 				TextField(.localized("Replacement"), text: $_newValue)
 			}
+			.appRowBackground()
 			.autocapitalization(.none)
 		}
 		.toolbar {

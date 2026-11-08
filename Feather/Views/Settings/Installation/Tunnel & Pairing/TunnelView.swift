@@ -32,6 +32,7 @@ struct TunnelView: View {
 					Text(.localized("No pairing file found, please import it."))
 				}
 			}
+			.appRowBackground()
 			
 			Section {
 				Button(.localized("Import Pairing File"), systemImage: "square.and.arrow.down") {
@@ -55,6 +56,7 @@ struct TunnelView: View {
 					}
 				}
 			}
+			.appRowBackground()
 			
 			NBSection(.localized("Help")) {
 				Button(.localized("Pairing File Guide"), systemImage: "questionmark.circle") {
@@ -99,9 +101,9 @@ struct TunnelView: View {
 		HStack {
 			VStack(alignment: .leading, spacing: 6) {
 				Text(.localized("Heartbeat"))
-					.font(.headline)
+					.font(AppFont.headline)
 				Text(.localized("The heartbeat is activated in the background, it will restart when the app is re-opened or prompted. If the status below is pulsing, that means its healthy."))
-					.font(.subheadline)
+					.font(AppFont.subheadline)
 					.foregroundStyle(.secondary)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

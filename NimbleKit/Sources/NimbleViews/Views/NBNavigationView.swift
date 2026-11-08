@@ -30,5 +30,9 @@ public struct NBNavigationView<Content>: View where Content: View {
 				.navigationTitle(_title)
 				.navigationBarTitleDisplayMode(_mode)
 		}
+		// AppMaster: solid black everywhere (no gray list backgrounds)
+		.scrollContentBackground(.hidden)
+		.background(AppTheme.background.ignoresSafeArea())
+		.appPresentationBackground()
 	}
 }

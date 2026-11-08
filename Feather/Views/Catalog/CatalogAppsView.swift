@@ -119,7 +119,7 @@ struct CatalogAppsView: View {
 					.font(.system(size: 40))
 					.foregroundStyle(.secondary)
 				Text(.localized(_selectedCategory == nil ? "No apps yet" : "No apps in this category"))
-					.font(.headline)
+					.font(AppFont.headline)
 			}
 		}
 	}

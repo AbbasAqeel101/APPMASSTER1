@@ -52,7 +52,7 @@ struct SigningFrameworksView: View {
 					_plugins.isEmpty
 				{
 					Text(.localized("No Frameworks or PlugIns Found."))
-						.font(.footnote)
+						.font(AppFont.footnote)
 						.foregroundColor(.disabled())
 				}
 			}

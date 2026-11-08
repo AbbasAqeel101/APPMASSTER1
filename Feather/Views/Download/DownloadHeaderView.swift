@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import NimbleExtensions
+import NimbleViews
 
 struct DownloadHeaderView: View {
 	@ObservedObject var downloadManager: DownloadManager
@@ -24,7 +25,7 @@ struct DownloadHeaderView: View {
 								HStack {
 									Spacer()
 									Text(verbatim: "+\(downloadManager.manualDownloads.count - 1)")
-										.font(.caption)
+										.font(AppFont.caption)
 										.foregroundColor(.secondary)
 										.padding(.vertical, 4)
 								}
@@ -50,7 +51,7 @@ struct DownloadItemView: View {
 	var body: some View {
 		VStack(alignment: .leading, spacing: 4) {
 			Text(download.displayName)
-				.font(.subheadline)
+				.font(AppFont.subheadline)
 				.lineLimit(1)
 			
 			ProgressView(value: overallProgress)
@@ -65,7 +66,7 @@ struct DownloadItemView: View {
 						.contentTransition(.numericText())
 				}
 			}
-			.font(.caption)
+			.font(AppFont.caption)
 			.foregroundColor(.secondary)
 		}
 		.padding(.vertical, 4)
