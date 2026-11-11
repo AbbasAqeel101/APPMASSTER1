@@ -71,6 +71,6 @@ struct SourceAppsCellView: View {
 			return trimmed
 		}
 		
-		return components.joined(separator: " • ")
+		return components.joined(separator: "  ")
 	}
 }

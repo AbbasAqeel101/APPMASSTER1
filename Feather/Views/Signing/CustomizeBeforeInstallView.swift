@@ -193,6 +193,7 @@ extension CustomizeBeforeInstallView {
 						temporaryOptions: _optionsManager.options
 					)
 				}
+				.appListBackground()
 				.navigationTitle(.localized("Properties"))
 			}
 		}

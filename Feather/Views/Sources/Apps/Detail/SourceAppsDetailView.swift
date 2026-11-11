@@ -66,7 +66,7 @@ struct SourceAppsDetailView: View {
 				}
 
 				Divider()
-				_infoPills(app: app)
+				_infoStrip()
 				Divider()
                 
 				_descriptionSection()
@@ -106,38 +106,6 @@ struct SourceAppsDetailView: View {
 					}
 					
 					Divider()
-				}
-				
-				NBSection(.localized("Information")) {
-					VStack(spacing: 12) {
-						if let sourceName = source.name {
-							_infoRow(title: .localized("Source"), value: sourceName)
-						}
-                        
-						if let developer = app.developer {
-							_infoRow(title: .localized("Developer"), value: developer)
-						}
-						
-						if let size = app.size {
-							_infoRow(title: .localized("Size"), value: size.formattedByteCount)
-						}
-						
-						if let category = app.category, !category.isEmpty {
-							_infoRow(title: .localized("Category"), value: category.capitalized)
-						}
-						
-						if let version = app.currentVersion {
-							_infoRow(title: .localized("Version"), value: version)
-						}
-						
-						if let date = app.currentDate?.date {
-							_infoRow(title: .localized("Updated"), value: DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none))
-						}
-						
-						if let bundleId = app.id {
-							_infoRow(title: .localized("Identifier"), value: bundleId)
-						}
-					}
 				}
 				
 				if let appPermissions = app.appPermissions {
@@ -272,42 +240,148 @@ extension SourceAppsDetailView {
 		}
 	}
 	
-	@ViewBuilder
-	private func _infoPills(app: ASRepository.App) -> some View {
-		let pillItems = _buildPills(from: app)
-		HStack(spacing: 6) {
-			ForEach(pillItems.indices, id: \.hashValue) { index in
-				let pill = pillItems[index]
-				NBPillView(
-					title: pill.title,
-					icon: pill.icon,
-					color: pill.color,
-					index: index,
-					count: pillItems.count
-				)
+	// MARK: Info strip (App Store style: swipe sideways to see all the cells)
+	private var _isArabic: Bool {
+		(Bundle.main.preferredLocalizations.first ?? "en").hasPrefix("ar")
+	}
+
+	private func _t(_ ar: String, _ en: String) -> String { _isArabic ? ar : en }
+
+	private struct InfoCellData: Identifiable {
+		let id = UUID()
+		let value: String
+		let icon: String
+	}
+
+	private func _genreName(_ genre: String) -> String {
+		guard _isArabic else { return genre }
+		let map: [String: String] = [
+			"Games": "ألعاب", "Social Networking": "تواصل اجتماعي", "Entertainment": "ترفيه",
+			"Photo & Video": "تصوير وفيديو", "Music": "موسيقى", "Utilities": "أدوات",
+			"Productivity": "إنتاجية", "Lifestyle": "أسلوب حياة", "Education": "تعليم",
+			"News": "أخبار", "Sports": "رياضة", "Travel": "سفر", "Shopping": "تسوق",
+			"Finance": "مال", "Health & Fitness": "صحة ولياقة", "Business": "أعمال",
+			"Navigation": "خرائط", "Weather": "طقس", "Reference": "مراجع",
+			"Food & Drink": "طعام وشراب", "Books": "كتب", "Medical": "طب",
+			"Graphics & Design": "تصميم", "Developer Tools": "أدوات المطورين"
+		]
+		return map[genre] ?? genre
+	}
+
+	private func _infoCells() -> [InfoCellData] {
+		var cells: [InfoCellData] = []
+
+		// downloads
+		let downloads = app.downloads ?? 0
+		cells.append(InfoCellData(
+			value: NumberFormatter.localizedString(from: NSNumber(value: downloads), number: .decimal),
+			icon: "arrow.down.square"
+		))
+
+		// file size
+		if let bytes = app.size ?? app.currentAppVersion?.size.map({ Int64($0) }), bytes > 0 {
+			cells.append(InfoCellData(
+				value: "~" + ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file),
+				icon: "shippingbox"
+			))
+		}
+
+		// supported system
+		if let minOS = app.currentAppVersion?.minOSVersion {
+			cells.append(InfoCellData(value: "iOS \(minOS.description)+", icon: "iphone"))
+		}
+
+		// category
+		let categoryName: String? = {
+			if let genre = app.genre, !genre.isEmpty { return _genreName(genre) }
+			if let category = app.category, !category.isEmpty { return category }
+			return nil
+		}()
+		if let categoryName {
+			cells.append(InfoCellData(value: categoryName, icon: "square.grid.2x2"))
+		}
+
+		// age
+		if let age = app.ageRating, !age.isEmpty {
+			let digits = age.filter(\.isNumber)
+			cells.append(InfoCellData(value: digits.isEmpty ? age : "+" + digits, icon: "person.2"))
+		}
+
+		// rating
+		if let rating = app.rating, rating > 0 {
+			var text = String(format: "%.1f", rating)
+			if let count = app.ratingCount, count > 0 {
+				text += count >= 1000
+					? " (" + String(format: "%.0f", Double(count) / 1000) + _t(" ألف", "K") + ")"
+					: " (\(count))"
 			}
+			cells.append(InfoCellData(value: text, icon: "star.fill"))
+		}
+
+		return cells
+	}
+
+	@ViewBuilder
+	private func _infoStrip() -> some View {
+		let cells = _infoCells()
+		if !cells.isEmpty {
+			ScrollView(.horizontal, showsIndicators: false) {
+				HStack(spacing: 0) {
+					ForEach(Array(cells.enumerated()), id: \.element.id) { index, cell in
+						_infoCell(cell)
+						if index < cells.count - 1 {
+							Divider().frame(height: 14)
+						}
+					}
+				}
+				.padding(.horizontal, 16)
+			}
+			.padding(.horizontal, -16)
 		}
 	}
-	
-	private func _buildPills(from app: ASRepository.App) -> [NBPillItem] {
-		var pills: [NBPillItem] = []
-		let tint = Color.accentColor
 
-		pills.append(NBPillItem(title: "\(app.downloads ?? 0)", icon: "arrow.down.circle", color: tint))
-
-		if let size = app.size {
-			pills.append(NBPillItem(title: size.formattedByteCount, icon: "archivebox", color: tint))
+	@ViewBuilder
+	private func _infoCell(_ cell: InfoCellData) -> some View {
+		HStack(spacing: 5) {
+			Text(cell.value)
+				.font(AppFont.caption)
+				.lineLimit(1)
+			Image(systemName: cell.icon)
+				.font(.system(size: 11, weight: .regular))
 		}
+		.foregroundStyle(.secondary)
+		.padding(.horizontal, 12)
+		.padding(.vertical, 2)
+	}
 
-		if let minOS = app.currentAppVersion?.minOSVersion {
-			pills.append(NBPillItem(title: "iOS \(minOS.description)+", icon: "iphone", color: tint))
+	/// "تحديث جديد" for the first week, then "قبل أسبوع" / "قبل أسبوعين" / "قبل 3 أسابيع", then months, then years.
+	private func _updateLabel(_ date: Date) -> String {
+		let days = Calendar.current.dateComponents([.day], from: date, to: Date()).day ?? 0
+		if days < 7 { return _t("تحديث جديد", "New update") }
+		if days < 28 {
+			let weeks = days / 7
+			switch weeks {
+			case 1: return _t("قبل أسبوع", "1 week ago")
+			case 2: return _t("قبل أسبوعين", "2 weeks ago")
+			default: return _t("قبل 3 أسابيع", "3 weeks ago")
+			}
 		}
-
-		if let category = app.category, !category.isEmpty {
-			pills.append(NBPillItem(title: category, icon: "square.grid.2x2", color: tint))
+		if days < 365 {
+			let months = max(1, days / 30)
+			switch months {
+			case 1: return _t("قبل شهر", "1 month ago")
+			case 2: return _t("قبل شهرين", "2 months ago")
+			case 3...10: return _t("قبل \(months) أشهر", "\(months) months ago")
+			default: return _t("قبل \(months) شهرًا", "\(months) months ago")
+			}
 		}
-
-		return pills
+		let years = days / 365
+		switch years {
+		case 1: return _t("قبل سنة", "1 year ago")
+		case 2: return _t("قبل سنتين", "2 years ago")
+		case 3...10: return _t("قبل \(years) سنوات", "\(years) years ago")
+		default: return _t("قبل \(years) سنة", "\(years) years ago")
+		}
 	}
 
 	/// "Version 249.0 • 6 hours ago"
@@ -315,7 +389,7 @@ extension SourceAppsDetailView {
 	private func _versionLine() -> some View {
 		let parts = _versionParts()
 		if !parts.isEmpty {
-			Text(parts.joined(separator: "  •  "))
+			Text(parts.joined(separator: "   "))
 				.font(AppFont.footnote)
 				.foregroundStyle(.secondary)
 				.lineLimit(1)
@@ -328,11 +402,8 @@ extension SourceAppsDetailView {
 		if let version = app.currentVersion, !version.isEmpty {
 			parts.append(String.localized("Version") + " " + version)
 		}
-		if let date = app.currentDate?.date {
-			let formatter = RelativeDateTimeFormatter()
-			formatter.unitsStyle = .full
-			formatter.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
-			parts.append(formatter.localizedString(for: date, relativeTo: Date()))
+		if let date = app.updateDate {
+			parts.append(_updateLabel(date))
 		}
 		return parts
 	}

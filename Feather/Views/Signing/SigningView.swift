@@ -239,6 +239,7 @@ extension SigningView {
 					options: $_temporaryOptions,
 					temporaryOptions: _optionsManager.options
 				)}
+				.appListBackground()
 				.navigationTitle(.localized("Properties"))
 			}
 		}

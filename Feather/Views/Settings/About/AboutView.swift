@@ -46,7 +46,6 @@ extension AboutView {
 		}
 		.appRowBackground()
 		.frame(maxWidth: .infinity)
-		.listRowBackground(EmptyView())
 	}
 
 	@ViewBuilder

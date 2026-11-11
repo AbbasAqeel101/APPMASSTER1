@@ -85,23 +85,26 @@ public enum AppFont {
 	public static var caption: Font { _make(.caption, 12, heavy: false) }
 	public static var caption2: Font { _make(.caption2, 11, heavy: false) }
 
-	/// Titles of navigation bars and the tab bar (UIKit parts of the interface).
+	/// Navigation bars: fully transparent (no coloured strip) so the system draws the
+	/// liquid-glass look; only the title font is customised. Also the tab bar font.
 	@MainActor
 	public static func applyUIKitAppearance() {
-		guard
-			let heavy = heavyName,
-			let regular = regularName,
-			let titleFont = UIFont(name: heavy, size: 17),
-			let largeTitleFont = UIFont(name: heavy, size: 32),
-			let tabFont = UIFont(name: regular, size: 10)
-		else {
-			return
+		let bar = UINavigationBarAppearance()
+		bar.configureWithTransparentBackground()
+		bar.shadowColor = .clear
+		if let heavy = heavyName {
+			if let titleFont = UIFont(name: heavy, size: 17) { bar.titleTextAttributes = [.font: titleFont] }
+			if let largeFont = UIFont(name: heavy, size: 32) { bar.largeTitleTextAttributes = [.font: largeFont] }
 		}
+		UINavigationBar.appearance().standardAppearance = bar
+		UINavigationBar.appearance().scrollEdgeAppearance = bar
+		UINavigationBar.appearance().compactAppearance = bar
+		UINavigationBar.appearance().compactScrollEdgeAppearance = bar
 
-		UINavigationBar.appearance().titleTextAttributes = [.font: titleFont]
-		UINavigationBar.appearance().largeTitleTextAttributes = [.font: largeTitleFont]
-		UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .normal)
-		UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .selected)
+		if let regular = regularName, let tabFont = UIFont(name: regular, size: 10) {
+			UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .normal)
+			UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .selected)
+		}
 	}
 }
 
@@ -112,22 +115,45 @@ public enum AppTheme {
 		Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? .black : .systemGroupedBackground })
 	}
 
-	/// Rows of settings-style lists.
+	/// Rows of settings-style lists: dark gray cards on the black background.
 	public static var row: Color {
-		Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? .black : .secondarySystemGroupedBackground })
+		Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(white: 0.11, alpha: 1) : .secondarySystemGroupedBackground })
 	}
 
-	/// Buttons / pills: a soft tint of the accent color instead of gray.
+	/// Buttons / pills / chips: the same dark gray as the cards.
 	public static var pill: Color {
-		Color.accentColor.opacity(0.16)
+		Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(white: 0.17, alpha: 1) : .tertiarySystemFill })
 	}
 }
 
 // MARK: - Modifiers
 public extension View {
-	/// Black row background for lists / forms.
+	/// Every row is its own dark-gray rounded card (small gap between cards, no separators).
 	func appRowBackground() -> some View {
-		listRowBackground(AppTheme.row)
+		listRowBackground(
+			RoundedRectangle(cornerRadius: 16, style: .continuous)
+				.fill(AppTheme.row)
+				.padding(.vertical, 3)
+		)
+		.listRowSeparator(.hidden)
+	}
+
+	/// Solid black behind a list / form.
+	func appListBackground() -> some View {
+		scrollContentBackground(.hidden)
+			.background(AppTheme.background.ignoresSafeArea())
+	}
+
+	/// Liquid-glass top bar: no bar background, soft edge fade (iOS 26), glass buttons only.
+	@ViewBuilder
+	func appGlassTopBar() -> some View {
+		if #available(iOS 26.0, *) {
+			self
+				.toolbarBackgroundVisibility(.hidden, for: .navigationBar)
+				.scrollEdgeEffectStyle(.soft, for: .top)
+		} else {
+			self.toolbarBackground(.hidden, for: .navigationBar)
+		}
 	}
 
 	@ViewBuilder

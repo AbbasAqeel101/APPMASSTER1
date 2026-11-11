@@ -144,7 +144,7 @@ struct CatalogRowView: View {
 		if !entry.category.isEmpty {
 			parts.append(entry.category)
 		}
-		return parts.joined(separator: " • ")
+		return parts.joined(separator: "  ")
 	}
 }
 

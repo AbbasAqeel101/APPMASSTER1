@@ -91,7 +91,7 @@ public struct NBSection<Content, Footer>: View
 		) {
 			_content
 		}
-		.listRowBackground(AppTheme.row)
+		.appRowBackground()
 		.headerProminence(.increased)
 	}
 }

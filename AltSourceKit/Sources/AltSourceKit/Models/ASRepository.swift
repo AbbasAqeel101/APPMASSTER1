@@ -199,7 +199,13 @@ extension ASRepository {
 
 		/// AppMaster: English description (App Store) for the AR / EN switch.
 		public var descriptionEN: String?
-		
+
+		/// AppMaster: App Store info shown in the detail page's info strip.
+		public var rating: Double?
+		public var ratingCount: Int?
+		public var ageRating: String?
+		public var genre: String?
+
 		public var marketplaceID: String?
 
 		public struct Screenshots: Decodable, Hashable, Sendable {
@@ -315,6 +321,10 @@ extension ASRepository {
 				try container.decodeIfPresent([URL].self, forKey: .screenshotURLs)
 
 			self.descriptionEN = try? container.decodeIfPresent(String.self, forKey: .descriptionEN)
+			self.rating = try? container.decodeIfPresent(Double.self, forKey: .rating)
+			self.ratingCount = try? container.decodeIfPresent(Int.self, forKey: .ratingCount)
+			self.ageRating = try? container.decodeIfPresent(String.self, forKey: .ageRating)
+			self.genre = try? container.decodeIfPresent(String.self, forKey: .genre)
 			
 			if
 				let marketplaceID = try container.decodeIfPresent(String.self, forKey: .marketplaceID),
@@ -374,6 +384,7 @@ extension ASRepository {
 			     localizedDescription, iconURL, tintColor, size, category, section, downloads, beta
 			case permissions, appPermissions
 			case screenshots, screenshotURLs, descriptionEN
+			case rating, ratingCount, ageRating, genre
 			case marketplaceID
 		}
 		
@@ -403,6 +414,11 @@ extension ASRepository {
 		
 		public var currentDate: DateParsed? {
 			currentAppVersion?.date ?? versionDate ?? date
+		}
+
+		/// AppMaster: the real update date (platform update / release date of the current version).
+		public var updateDate: Date? {
+			versionDate?.date ?? currentAppVersion?.date?.date ?? date?.date
 		}
 		
 		public var currentDescription: String? {

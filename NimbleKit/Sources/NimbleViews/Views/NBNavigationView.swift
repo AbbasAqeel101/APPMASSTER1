@@ -34,5 +34,6 @@ public struct NBNavigationView<Content>: View where Content: View {
 		.scrollContentBackground(.hidden)
 		.background(AppTheme.background.ignoresSafeArea())
 		.appPresentationBackground()
+		.appGlassTopBar()
 	}
 }
