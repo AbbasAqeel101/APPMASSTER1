@@ -23,6 +23,8 @@ class Download: Identifiable, @unchecked Sendable {
 	}
 	
 	var task: URLSessionDownloadTask?
+	/// One-tap installs download with several connections at once (see ParallelDownloader).
+	var parallel: ParallelDownloader?
 	var resumeData: Data?
 	
 	let id: String
@@ -117,6 +119,21 @@ class DownloadManager: NSObject, ObservableObject {
 		_foregroundSession = URLSession(configuration: foreground, delegate: self, delegateQueue: nil)
 	}
 	
+	/// Hosts throttle clients that don't look like a browser; present the same
+	/// request Safari makes so downloads run at full speed.
+	static func browserRequest(_ url: URL) -> URLRequest {
+		var request = URLRequest(url: url)
+		request.setValue(
+			"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+			forHTTPHeaderField: "User-Agent"
+		)
+		request.setValue("*/*", forHTTPHeaderField: "Accept")
+		if let scheme = url.scheme, let host = url.host {
+			request.setValue("\(scheme)://\(host)/", forHTTPHeaderField: "Referer")
+		}
+		return request
+	}
+
 	private func _urlSession(for download: Download) -> URLSession {
 		download.autoInstall ? _foregroundSession : _session
 	}
@@ -139,9 +156,13 @@ class DownloadManager: NSObject, ObservableObject {
 		let download = Download(id: id, url: url, sourceProvenance: sourceProvenance)
 		download.autoInstall = autoInstall
 		
-		let task = _urlSession(for: download).downloadTask(with: url)
-		download.task = task
-		task.resume()
+		if autoInstall {
+			_startParallel(download)
+		} else {
+			let task = _urlSession(for: download).downloadTask(with: Self.browserRequest(url))
+			download.task = task
+			task.resume()
+		}
 		
 		downloads.append(download)
 		
@@ -156,6 +177,58 @@ class DownloadManager: NSObject, ObservableObject {
 		return download
 	}
 	
+	/// Several connections at once; falls back to the single-connection download when the
+	/// host can't do ranges or a part keeps failing.
+	private func _startParallel(_ download: Download) {
+		let parallel = ParallelDownloader(url: download.url)
+		download.parallel = parallel
+
+		parallel.onProgress = { [weak download] written, total in
+			DispatchQueue.main.async {
+				guard let download else { return }
+				download.progress = total > 0 ? Double(written) / Double(total) : 0
+				download.bytesDownloaded = written
+				download.totalBytes = total
+				download.retryCount = 0
+				OneTapInstaller.shared.updateDownload(written: written, total: total)
+
+				#if !targetEnvironment(macCatalyst)
+				if #available(iOS 26.0, *) {
+					BackgroundTaskManager.shared.updateProgress(for: download.id, progress: download.overallProgress)
+				}
+				#endif
+			}
+		}
+
+		parallel.onFinish = { [weak self, weak download] file in
+			DispatchQueue.main.async {
+				guard let self, let download, self.getDownloadIndex(by: download.id) != nil else {
+					try? FileManager.default.removeItem(at: file)
+					return
+				}
+				download.parallel = nil
+				OneTapInstaller.shared.markPreparing()
+				do {
+					try self.handlePachageFile(url: file, dl: download)
+				} catch {
+					OneTapInstaller.shared.fail(error.localizedDescription)
+				}
+			}
+		}
+
+		parallel.onFallback = { [weak self, weak download] in
+			DispatchQueue.main.async {
+				guard let self, let download, self.getDownloadIndex(by: download.id) != nil else { return }
+				download.parallel = nil
+				let task = self._foregroundSession.downloadTask(with: Self.browserRequest(download.url))
+				download.task = task
+				task.resume()
+			}
+		}
+
+		parallel.start()
+	}
+
 	func startArchive(
 		from url: URL,
 		id: String = UUID().uuidString
@@ -180,7 +253,7 @@ class DownloadManager: NSObject, ObservableObject {
 			_updateBackgroundAudioState()
 			#endif
 		} else if let url = download.task?.originalRequest?.url {
-			let task = _urlSession(for: download).downloadTask(with: url)
+			let task = _urlSession(for: download).downloadTask(with: Self.browserRequest(url))
 			download.task = task
 			task.resume()
 			
@@ -191,6 +264,8 @@ class DownloadManager: NSObject, ObservableObject {
 	}
 	
 	func cancelDownload(_ download: Download) {
+		download.parallel?.cancel()
+		download.parallel = nil
 		download.task?.cancel()
 		if download.autoInstall { OneTapInstaller.shared.reset() }
 		

@@ -27,10 +27,12 @@ struct NotificationBellButton: View {
 				.overlay(alignment: .topTrailing) {
 					if _center.unreadCount > 0 {
 						Text(_center.unreadCount > 99 ? "99+" : "\(_center.unreadCount)")
-							.font(.system(size: 10, weight: .bold))
+							.font(.system(size: 10, weight: .bold).monospacedDigit())
 							.foregroundStyle(.white)
+							.lineLimit(1)
+							.fixedSize()
 							.padding(.horizontal, 5)
-							.padding(.vertical, 1)
+							.frame(minWidth: 18, minHeight: 18)
 							.background(Capsule().fill(Color.red))
 							.offset(x: 10, y: -8)
 					}

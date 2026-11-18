@@ -79,6 +79,7 @@ struct HomeView: View {
 	static let companySourceIdentifier = AppMasterConfig.companySourceIdentifier
 
 	@StateObject private var viewModel = SourcesViewModel.shared
+	@ObservedObject private var _layoutStore = HomeLayoutStore.shared
 	@State private var _isProfilePresenting = false
 
 	@FetchRequest(
@@ -132,15 +133,11 @@ struct HomeView: View {
 			ScrollView {
 				VStack(alignment: .leading, spacing: 28) {
 					if let repo = _companyRepo {
-						if !_featuredApps.isEmpty {
-							_featuredSection(repo: repo, apps: _featuredApps)
+						ForEach(_blocks) { block in
+							_blockView(block, repo: repo)
 						}
 
-						ForEach(_categorizedLists, id: \.title) { list in
-							_appRow(repo: repo, title: list.title, apps: list.apps)
-						}
-
-						if _featuredApps.isEmpty && _categorizedLists.isEmpty {
+						if !_hasContent {
 							_emptyState()
 						}
 					} else {
@@ -169,8 +166,52 @@ struct HomeView: View {
 		.task(id: Array(_sources)) {
 			await viewModel.fetchSources(_sources)
 		}
+		.task {
+			await _layoutStore.refresh()
+		}
 		.refreshable {
+			await _layoutStore.refresh()
 			await viewModel.fetchSources(_sources, refresh: true)
+		}
+	}
+
+	/// Section order set from the dashboard; the classic order until it is known.
+	private var _blocks: [HomeLayoutBlock] {
+		_layoutStore.blocks ?? [
+			HomeLayoutBlock(id: "featured", kind: "featured"),
+			HomeLayoutBlock(id: "lists", kind: "lists")
+		]
+	}
+
+	private var _hasContent: Bool {
+		for block in _blocks {
+			switch block.kind {
+			case "slides", "marquee": return true
+			case "featured": if !_featuredApps.isEmpty { return true }
+			case "lists": if !_categorizedLists.isEmpty { return true }
+			default: break
+			}
+		}
+		return false
+	}
+
+	@ViewBuilder
+	private func _blockView(_ block: HomeLayoutBlock, repo: ASRepository) -> some View {
+		switch block.kind {
+		case "slides":
+			HomeSlidesSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
+		case "marquee":
+			HomeMarqueeSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
+		case "featured":
+			if !_featuredApps.isEmpty {
+				_featuredSection(repo: repo, apps: _featuredApps)
+			}
+		case "lists":
+			ForEach(_categorizedLists, id: \.title) { list in
+				_appRow(repo: repo, title: list.title, apps: list.apps)
+			}
+		default:
+			EmptyView()
 		}
 	}
 }
