@@ -85,26 +85,23 @@ public enum AppFont {
 	public static var caption: Font { _make(.caption, 12, heavy: false) }
 	public static var caption2: Font { _make(.caption2, 11, heavy: false) }
 
-	/// Navigation bars: fully transparent (no coloured strip) so the system draws the
-	/// liquid-glass look; only the title font is customised. Also the tab bar font.
+	/// Titles of navigation bars and the tab bar (UIKit parts of the interface).
 	@MainActor
 	public static func applyUIKitAppearance() {
-		let bar = UINavigationBarAppearance()
-		bar.configureWithTransparentBackground()
-		bar.shadowColor = .clear
-		if let heavy = heavyName {
-			if let titleFont = UIFont(name: heavy, size: 17) { bar.titleTextAttributes = [.font: titleFont] }
-			if let largeFont = UIFont(name: heavy, size: 32) { bar.largeTitleTextAttributes = [.font: largeFont] }
+		guard
+			let heavy = heavyName,
+			let regular = regularName,
+			let titleFont = UIFont(name: heavy, size: 17),
+			let largeTitleFont = UIFont(name: heavy, size: 32),
+			let tabFont = UIFont(name: regular, size: 10)
+		else {
+			return
 		}
-		UINavigationBar.appearance().standardAppearance = bar
-		UINavigationBar.appearance().scrollEdgeAppearance = bar
-		UINavigationBar.appearance().compactAppearance = bar
-		UINavigationBar.appearance().compactScrollEdgeAppearance = bar
 
-		if let regular = regularName, let tabFont = UIFont(name: regular, size: 10) {
-			UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .normal)
-			UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .selected)
-		}
+		UINavigationBar.appearance().titleTextAttributes = [.font: titleFont]
+		UINavigationBar.appearance().largeTitleTextAttributes = [.font: largeTitleFont]
+		UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .normal)
+		UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .selected)
 	}
 }
 

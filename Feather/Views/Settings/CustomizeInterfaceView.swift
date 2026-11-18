@@ -90,6 +90,8 @@ struct CustomizeInterfaceView: View {
 			.appRowBackground()
 		}
 		.environment(\.editMode, $_editMode)
+		.scrollContentBackground(.hidden)
+		.background(AppTheme.background.ignoresSafeArea())
 		.navigationTitle(.localized("Customize Interface"))
 		.toolbar {
 			ToolbarItem(placement: .topBarTrailing) {
@@ -101,8 +103,11 @@ struct CustomizeInterfaceView: View {
 				}
 			}
 			ToolbarItem(placement: .topBarTrailing) {
-				Button(_editMode == .active ? String.localized("Done") : String.localized("Edit")) {
+				Button {
 					withAnimation { _editMode = _editMode == .active ? .inactive : .active }
+				} label: {
+					Text(_editMode == .active ? String.localized("Done") : String.localized("Edit"))
+						.foregroundStyle(Color(red: 0.72, green: 0.47, blue: 0.24))
 				}
 			}
 		}

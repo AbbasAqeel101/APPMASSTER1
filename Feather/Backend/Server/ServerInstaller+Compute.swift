@@ -86,9 +86,11 @@ extension ServerInstaller {
 	
 	private func _createIcon(_ r: CGFloat) -> Data {
 		let renderer = UIGraphicsImageRenderer(size: .init(width: r, height: r))
+		let logo = UIImage(named: "AppMasterLogo")
 		let image = renderer.image { ctx in
-			UIColor.tintColor.setFill()
+			UIColor.black.setFill()
 			ctx.fill(.init(x: 0, y: 0, width: r, height: r))
+			logo?.draw(in: .init(x: 0, y: 0, width: r, height: r))
 		}
 		return image.pngData()!
 	}

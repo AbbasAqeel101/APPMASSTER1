@@ -68,6 +68,7 @@ struct DownloadButtonView: View {
 					}
 					.buttonStyle(.borderless)
 
+					if !compact {
 					Button {
 						// the signing screen opens right away (nothing is downloaded yet);
 						// "Install" there starts download -> sign -> install in the background
@@ -95,6 +96,7 @@ struct DownloadButtonView: View {
 						_pill(.localized("Customize"), prominent: false)
 					}
 					.buttonStyle(.borderless)
+					}
 				}
 				.compatTransition()
 			}

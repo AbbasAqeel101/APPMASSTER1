@@ -45,7 +45,6 @@ public struct NBList<Content>: View where Content: View {
 			}
 		}
 		.appListBackground()
-		.appGlassTopBar()
 		.navigationTitle(_title)
 		.navigationBarTitleDisplayMode(_mode)
 	}
