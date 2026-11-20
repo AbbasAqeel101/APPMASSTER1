@@ -9230,6 +9230,23 @@
         }
       }
     },
+    "Today": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اليوم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
     "Install": {
       "extractionState": "manual",
       "localizations": {

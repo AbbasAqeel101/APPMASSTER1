@@ -97,58 +97,25 @@ struct HomeView: View {
 		return viewModel.sources[source]
 	}
 
-	private var _featuredApps: [ASRepository.App] {
-		guard let repo = _companyRepo else { return [] }
-		let ids = repo.featuredApps ?? []
-		if ids.isEmpty {
-			// fall back to showing the newest few apps so Home is never empty
-			return Array(repo.apps.prefix(5))
-		}
-		return repo.apps.filter { ids.contains($0.id ?? "") }
-	}
-
-	/// Apps grouped by their `category` field, in first-seen order.
-	private var _categorizedLists: [(title: String, apps: [ASRepository.App])] {
-		guard let repo = _companyRepo else { return [] }
-		var order: [String] = []
-		var groups: [String: [ASRepository.App]] = [:]
-
-		for app in repo.apps {
-			guard let category = app.category?.trimmingCharacters(in: .whitespacesAndNewlines), !category.isEmpty else { continue }
-			// custom categories live in the Apps / Games tabs (as chips), Home keeps only the main rows
-			guard CompanyCatalog.isMainCategory(category, kind: .apps) || CompanyCatalog.isMainCategory(category, kind: .games) else { continue }
-			if groups[category] == nil {
-				groups[category] = []
-				order.append(category)
-			}
-			groups[category]?.append(app)
-		}
-
-		return order.map { (title: $0, apps: groups[$0] ?? []) }
-	}
-
 	// MARK: Body
 	var body: some View {
-		NBNavigationView(.localized("Home")) {
+		NBNavigationView("") {
 			ScrollView {
 				VStack(alignment: .leading, spacing: 28) {
+					// the Home is empty until sections are added from the dashboard
 					if let repo = _companyRepo {
 						ForEach(_blocks) { block in
 							_blockView(block, repo: repo)
 						}
-
-						if !_hasContent {
-							_emptyState()
-						}
-					} else {
-						_loadingOrEmptyState()
 					}
 				}
 				.padding(.vertical, 12)
 			}
 			.toolbar {
 				AvatarToolbarItem(placement: .topBarLeading) {
-					CompanyIconButton()
+					Text(.localized("Today"))
+						.font(.system(size: 34, weight: .bold))
+						.foregroundStyle(.primary)
 				}
 				AvatarToolbarItem(placement: .topBarTrailing) {
 					Button {
@@ -175,24 +142,9 @@ struct HomeView: View {
 		}
 	}
 
-	/// Section order set from the dashboard; the classic order until it is known.
+	/// Sections come only from the dashboard; nothing is shown until they are added.
 	private var _blocks: [HomeLayoutBlock] {
-		_layoutStore.blocks ?? [
-			HomeLayoutBlock(id: "featured", kind: "featured"),
-			HomeLayoutBlock(id: "lists", kind: "lists")
-		]
-	}
-
-	private var _hasContent: Bool {
-		for block in _blocks {
-			switch block.kind {
-			case "slides", "marquee": return true
-			case "featured": if !_featuredApps.isEmpty { return true }
-			case "lists": if !_categorizedLists.isEmpty { return true }
-			default: break
-			}
-		}
-		return false
+		_layoutStore.blocks ?? []
 	}
 
 	@ViewBuilder
@@ -203,151 +155,11 @@ struct HomeView: View {
 		case "marquee":
 			HomeMarqueeSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
 		case "featured":
-			if !_featuredApps.isEmpty {
-				_featuredSection(repo: repo, apps: _featuredApps)
-			}
-		case "lists":
-			ForEach(_categorizedLists, id: \.title) { list in
-				_appRow(repo: repo, title: list.title, apps: list.apps)
-			}
+			HomeFeaturedSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
+		case "apps":
+			HomeAppsRowSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
 		default:
 			EmptyView()
 		}
-	}
-}
-
-// MARK: - Sections
-extension HomeView {
-	@ViewBuilder
-	private func _featuredSection(repo: ASRepository, apps: [ASRepository.App]) -> some View {
-		VStack(alignment: .leading, spacing: 12) {
-			Text(.localized("Featured"))
-				.font(AppFont.title2.bold())
-				.padding(.horizontal)
-
-			TabView {
-				ForEach(apps, id: \.currentUniqueId) { app in
-					NavigationLink {
-						SourceAppsDetailView(sourceURL: _companySource?.sourceURL, source: repo, app: app)
-					} label: {
-						_featuredCard(app: app)
-					}
-					.buttonStyle(.plain)
-				}
-			}
-			.tabViewStyle(.page(indexDisplayMode: apps.count > 1 ? .automatic : .never))
-			.frame(height: 220)
-		}
-	}
-
-	@ViewBuilder
-	private func _featuredCard(app: ASRepository.App) -> some View {
-		ZStack(alignment: .bottomLeading) {
-			RoundedRectangle(cornerRadius: 22, style: .continuous)
-				.fill(app.tintColor ?? Color.accentColor)
-				.opacity(0.85)
-
-			HStack(spacing: 16) {
-				if let iconURL = app.iconURL {
-					LazyImage(url: iconURL) { state in
-						if let image = state.image {
-							image.appIconStyle(size: 72)
-						}
-					}
-				}
-				VStack(alignment: .leading, spacing: 4) {
-					Text(.localized("Featured App"))
-						.font(AppFont.caption)
-						.foregroundStyle(.white.opacity(0.85))
-					Text(app.currentName)
-						.font(AppFont.title3.bold())
-						.foregroundStyle(.white)
-					if let subtitle = app.currentDescription {
-						Text(subtitle)
-							.font(AppFont.subheadline)
-							.foregroundStyle(.white.opacity(0.9))
-							.lineLimit(2)
-					}
-				}
-				Spacer()
-			}
-			.padding(20)
-		}
-		.padding(.horizontal)
-	}
-
-	@ViewBuilder
-	private func _appRow(repo: ASRepository, title: String, apps: [ASRepository.App]) -> some View {
-		VStack(alignment: .leading, spacing: 12) {
-			Text(title)
-				.font(AppFont.title3.bold())
-				.padding(.horizontal)
-
-			ScrollView(.horizontal, showsIndicators: false) {
-				LazyHStack(spacing: 16) {
-					ForEach(Array(apps.prefix(30)), id: \.currentUniqueId) { app in
-						NavigationLink {
-							SourceAppsDetailView(sourceURL: _companySource?.sourceURL, source: repo, app: app)
-						} label: {
-							_appTile(app: app)
-						}
-						.buttonStyle(.plain)
-					}
-				}
-				.padding(.horizontal)
-			}
-		}
-	}
-
-	@ViewBuilder
-	private func _appTile(app: ASRepository.App) -> some View {
-		VStack(alignment: .leading, spacing: 8) {
-			if let iconURL = app.iconURL {
-				LazyImage(url: iconURL) { state in
-					if let image = state.image {
-						image.appIconStyle(size: 90)
-					} else {
-						Image("App_Unknown").appIconStyle(size: 90)
-					}
-				}
-			} else {
-				Image("App_Unknown").appIconStyle(size: 90)
-			}
-
-			Text(app.currentName)
-				.font(AppFont.footnote.weight(.medium))
-				.lineLimit(1)
-				.frame(width: 90, alignment: .leading)
-		}
-	}
-
-	@ViewBuilder
-	private func _loadingOrEmptyState() -> some View {
-		VStack(spacing: 12) {
-			ProgressView()
-			Text(.localized("Loading apps…"))
-				.font(AppFont.subheadline)
-				.foregroundStyle(.secondary)
-		}
-		.frame(maxWidth: .infinity)
-		.padding(.top, 80)
-	}
-
-	@ViewBuilder
-	private func _emptyState() -> some View {
-		VStack(spacing: 8) {
-			Image(systemName: "square.grid.2x2")
-				.font(.system(size: 40))
-				.foregroundStyle(.secondary)
-			Text(.localized("No apps yet"))
-				.font(AppFont.headline)
-			Text(.localized("Apps you feature or categorize on the dashboard will show up here."))
-				.font(AppFont.subheadline)
-				.foregroundStyle(.secondary)
-				.multilineTextAlignment(.center)
-				.padding(.horizontal, 40)
-		}
-		.frame(maxWidth: .infinity)
-		.padding(.top, 80)
 	}
 }

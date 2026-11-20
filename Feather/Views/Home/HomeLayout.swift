@@ -236,7 +236,7 @@ struct HomeSlidesSection: View {
 				}
 			}
 			.tabViewStyle(.page(indexDisplayMode: .never))
-			.frame(height: 430)
+			.frame(height: 510)
 
 			if _slides.count > 1 {
 				HStack(spacing: 6) {
@@ -288,7 +288,7 @@ private struct HomeSlideCard: View {
 			.overlay { _media }
 			.overlay(alignment: .bottom) { _fog }
 			.overlay(alignment: .bottom) { _texts }
-			.frame(height: 420)
+			.frame(height: 500)
 			.clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
 	}
 
@@ -332,7 +332,7 @@ private struct HomeSlideCard: View {
 				endPoint: .bottom
 			)
 		}
-		.frame(height: 250)
+		.frame(height: 190)
 		.environment(\.colorScheme, .dark)
 		.allowsHitTesting(false)
 	}
@@ -373,7 +373,7 @@ private struct HomeSlideCard: View {
 		}
 		.frame(maxWidth: .infinity, alignment: .leading)
 		.padding(.leading, 18)
-		.padding(.trailing, hasButton ? 76 : 18)
+		.padding(.trailing, hasButton ? 110 : 18)
 		.padding(.bottom, 18)
 		.allowsHitTesting(false)
 	}
@@ -417,11 +417,13 @@ private struct HomeSlideDownloadButton: View {
 				Button {
 					_start()
 				} label: {
-					Image(systemName: "arrow.down")
-						.font(.system(size: 18, weight: .semibold))
+					Text(.localized("Install"))
+						.font(AppFont.subheadline.weight(.bold))
 						.foregroundStyle(.white)
-						.frame(width: 46, height: 46)
-						.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+						.lineLimit(1)
+						.padding(.horizontal, 20)
+						.padding(.vertical, 9)
+						.background(.ultraThinMaterial, in: Capsule())
 				}
 				.buttonStyle(.plain)
 			}
@@ -559,6 +561,132 @@ struct HomeMarqueeSection: View {
 			.buttonStyle(.plain)
 		} else {
 			icon
+		}
+	}
+}
+
+// MARK: - Featured apps (chosen from the dashboard)
+struct HomeFeaturedSection: View {
+	let block: HomeLayoutBlock
+	let repo: ASRepository
+	let sourceURL: URL?
+
+	private var _items: [ASRepository.App] {
+		(block.apps ?? []).compactMap { HomeLayoutMatcher.resolve($0, in: repo) }
+	}
+
+	var body: some View {
+		let items = _items
+		if !items.isEmpty {
+			VStack(alignment: .leading, spacing: 12) {
+				if let title = block.title, !title.isEmpty {
+					Text(title)
+						.font(AppFont.title2.bold())
+						.padding(.horizontal)
+				}
+				TabView {
+					ForEach(items, id: \.currentUniqueId) { app in
+						NavigationLink {
+							SourceAppsDetailView(sourceURL: sourceURL, source: repo, app: app)
+						} label: {
+							_card(app)
+						}
+						.buttonStyle(.plain)
+					}
+				}
+				.tabViewStyle(.page(indexDisplayMode: items.count > 1 ? .automatic : .never))
+				.frame(height: 220)
+			}
+		}
+	}
+
+	@ViewBuilder
+	private func _card(_ app: ASRepository.App) -> some View {
+		ZStack(alignment: .bottomLeading) {
+			RoundedRectangle(cornerRadius: 22, style: .continuous)
+				.fill(app.tintColor ?? Color.accentColor)
+				.opacity(0.85)
+			HStack(spacing: 16) {
+				if let iconURL = app.iconURL {
+					LazyImage(url: iconURL) { state in
+						if let image = state.image {
+							image.appIconStyle(size: 72)
+						}
+					}
+				}
+				VStack(alignment: .leading, spacing: 4) {
+					Text(app.currentName)
+						.font(AppFont.title3.bold())
+						.foregroundStyle(.white)
+					if let subtitle = app.currentDescription {
+						Text(subtitle)
+							.font(AppFont.subheadline)
+							.foregroundStyle(.white.opacity(0.9))
+							.lineLimit(2)
+					}
+				}
+				Spacer()
+			}
+			.padding(20)
+		}
+		.padding(.horizontal)
+	}
+}
+
+// MARK: - Row of apps (chosen from the dashboard)
+struct HomeAppsRowSection: View {
+	let block: HomeLayoutBlock
+	let repo: ASRepository
+	let sourceURL: URL?
+
+	private var _apps: [ASRepository.App] {
+		(block.apps ?? []).compactMap { HomeLayoutMatcher.resolve($0, in: repo) }
+	}
+
+	var body: some View {
+		let apps = _apps
+		if !apps.isEmpty {
+			VStack(alignment: .leading, spacing: 12) {
+				if let title = block.title, !title.isEmpty {
+					Text(title)
+						.font(AppFont.title3.bold())
+						.padding(.horizontal)
+				}
+				ScrollView(.horizontal, showsIndicators: false) {
+					LazyHStack(spacing: 16) {
+						ForEach(apps, id: \.currentUniqueId) { app in
+							NavigationLink {
+								SourceAppsDetailView(sourceURL: sourceURL, source: repo, app: app)
+							} label: {
+								_tile(app)
+							}
+							.buttonStyle(.plain)
+						}
+					}
+					.padding(.horizontal)
+				}
+			}
+		}
+	}
+
+	@ViewBuilder
+	private func _tile(_ app: ASRepository.App) -> some View {
+		VStack(alignment: .leading, spacing: 8) {
+			if let iconURL = app.iconURL {
+				LazyImage(url: iconURL) { state in
+					if let image = state.image {
+						image.appIconStyle(size: 90)
+					} else {
+						Image("App_Unknown").appIconStyle(size: 90)
+					}
+				}
+			} else {
+				Image("App_Unknown").appIconStyle(size: 90)
+			}
+			Text(app.currentName)
+				.font(AppFont.footnote.weight(.medium))
+				.lineLimit(1)
+				.frame(width: 90, alignment: .leading)
 		}
 	}
 }
