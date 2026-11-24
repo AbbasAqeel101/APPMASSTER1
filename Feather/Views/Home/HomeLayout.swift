@@ -92,6 +92,27 @@ enum HomeLayoutMatcher {
 	}
 }
 
+/// Built once per section so every tile is matched with a dictionary lookup
+/// instead of scanning the whole catalog each time.
+struct HomeLayoutIndex {
+	private var _byIPA: [String: ASRepository.App] = [:]
+	private var _byBundle: [String: ASRepository.App] = [:]
+
+	init(_ repo: ASRepository) {
+		for app in repo.apps {
+			if let ipa = app.downloadURL?.absoluteString, _byIPA[ipa] == nil { _byIPA[ipa] = app }
+			if let id = app.id, _byBundle[id] == nil { _byBundle[id] = app }
+		}
+	}
+
+	func resolve(_ app: HomeLayoutApp?) -> ASRepository.App? {
+		guard let app else { return nil }
+		if let ipa = app.ipa_url, !ipa.isEmpty, let found = _byIPA[ipa] { return found }
+		if let bundle = app.bundle_id, !bundle.isEmpty { return _byBundle[bundle] }
+		return nil
+	}
+}
+
 // MARK: - Video (muted, looping, fills its frame)
 private final class LoopingPlayerView: UIView {
 	override class var layerClass: AnyClass { AVPlayerLayer.self }
@@ -148,11 +169,11 @@ private enum GIFLoader {
 		guard count > 0 else { return nil }
 		if count == 1 { return UIImage(data: data) }
 
-		let step = max(1, count / 120)
+		let step = max(1, count / 40)
 		let options: [CFString: Any] = [
 			kCGImageSourceCreateThumbnailFromImageAlways: true,
 			kCGImageSourceCreateThumbnailWithTransform: true,
-			kCGImageSourceThumbnailMaxPixelSize: 900
+			kCGImageSourceThumbnailMaxPixelSize: 480
 		]
 		var frames: [UIImage] = []
 		var total: Double = 0
@@ -222,6 +243,7 @@ struct HomeSlidesSection: View {
 	private var _slides: [HomeLayoutSlide] { block.slides ?? [] }
 
 	var body: some View {
+		let index = HomeLayoutIndex(repo)
 		VStack(alignment: .leading, spacing: 12) {
 			if let title = block.title, !title.isEmpty {
 				Text(title)
@@ -230,9 +252,9 @@ struct HomeSlidesSection: View {
 			}
 
 			TabView(selection: $_page) {
-				ForEach(Array(_slides.enumerated()), id: \.offset) { index, slide in
-					_pageView(slide: slide, isActive: index == _page)
-						.tag(index)
+				ForEach(Array(_slides.enumerated()), id: \.offset) { pageIndex, slide in
+					_pageView(slide: slide, isActive: pageIndex == _page, index: index)
+						.tag(pageIndex)
 				}
 			}
 			.tabViewStyle(.page(indexDisplayMode: .never))
@@ -240,9 +262,9 @@ struct HomeSlidesSection: View {
 
 			if _slides.count > 1 {
 				HStack(spacing: 6) {
-					ForEach(0..<_slides.count, id: \.self) { index in
+					ForEach(0..<_slides.count, id: \.self) { dot in
 						Circle()
-							.fill(index == _page ? Color.primary : Color.secondary.opacity(0.4))
+							.fill(dot == _page ? Color.primary : Color.secondary.opacity(0.4))
 							.frame(width: 6, height: 6)
 					}
 				}
@@ -252,8 +274,8 @@ struct HomeSlidesSection: View {
 	}
 
 	@ViewBuilder
-	private func _pageView(slide: HomeLayoutSlide, isActive: Bool) -> some View {
-		let resolved = HomeLayoutMatcher.resolve(slide.app, in: repo)
+	private func _pageView(slide: HomeLayoutSlide, isActive: Bool, index: HomeLayoutIndex) -> some View {
+		let resolved = index.resolve(slide.app)
 		ZStack(alignment: .bottomTrailing) {
 			if let resolved {
 				NavigationLink {
@@ -270,6 +292,29 @@ struct HomeSlidesSection: View {
 			}
 		}
 		.padding(.horizontal)
+	}
+}
+
+/// Portrait pictures fill the card; wide ones are shown whole over a soft copy of themselves.
+private struct HomeFitImage: View {
+	let url: URL
+
+	var body: some View {
+		LazyImage(url: url) { state in
+			if let image = state.image {
+				let size = state.imageContainer?.image.size ?? .zero
+				if size.height > 0 && size.width / size.height > 0.8 {
+					ZStack {
+						image.resizable().scaledToFill().opacity(0.35).blur(radius: 24)
+						image.resizable().scaledToFit()
+					}
+				} else {
+					image.resizable().scaledToFill()
+				}
+			} else {
+				Color.black
+			}
+		}
 	}
 }
 
@@ -303,13 +348,7 @@ private struct HomeSlideCard: View {
 					case "gif":
 						GIFView(url: url)
 					default:
-						LazyImage(url: url) { state in
-							if let image = state.image {
-								image.resizable().scaledToFill()
-							} else {
-								Color.black
-							}
-						}
+						HomeFitImage(url: url)
 					}
 				}
 			}
@@ -320,20 +359,12 @@ private struct HomeSlideCard: View {
 
 	/// soft graduated haze behind the text
 	private var _fog: some View {
-		ZStack {
-			Rectangle()
-				.fill(.ultraThinMaterial)
-				.mask(
-					LinearGradient(colors: [.clear, .black, .black], startPoint: .top, endPoint: .bottom)
-				)
-			LinearGradient(
-				colors: [.clear, Color.black.opacity(0.45), Color.black.opacity(0.85)],
-				startPoint: .top,
-				endPoint: .bottom
-			)
-		}
+		LinearGradient(
+			colors: [.clear, Color.black.opacity(0.45), Color.black.opacity(0.85)],
+			startPoint: .top,
+			endPoint: .bottom
+		)
 		.frame(height: 190)
-		.environment(\.colorScheme, .dark)
 		.allowsHitTesting(false)
 	}
 
@@ -407,7 +438,7 @@ private struct HomeSlideDownloadButton: View {
 						.foregroundStyle(.white)
 				}
 				.frame(width: 46, height: 46)
-				.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+				.background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
 				.onTapGesture {
 					if _progress <= 0.75 {
 						downloadManager.cancelDownload(current)
@@ -423,7 +454,7 @@ private struct HomeSlideDownloadButton: View {
 						.lineLimit(1)
 						.padding(.horizontal, 20)
 						.padding(.vertical, 9)
-						.background(.ultraThinMaterial, in: Capsule())
+						.background(Color.white.opacity(0.22), in: Capsule())
 				}
 				.buttonStyle(.plain)
 			}
@@ -468,6 +499,8 @@ private struct MarqueeRow<Tile: View>: View {
 	let reverse: Bool
 	let tile: (HomeLayoutApp) -> Tile
 
+	@State private var _go = false
+
 	private let _size: CGFloat = 66
 	private let _gap: CGFloat = 14
 	private let _speed: Double = 26
@@ -481,22 +514,24 @@ private struct MarqueeRow<Tile: View>: View {
 
 	var body: some View {
 		let unit = _unit
-		let period = Double(unit.count) * Double(_size + _gap)
-		TimelineView(.animation) { context in
-			let t = context.date.timeIntervalSinceReferenceDate * _speed
-			let shift = t.truncatingRemainder(dividingBy: max(period, 1))
-			let x = reverse ? -period + shift : -shift
-			HStack(spacing: _gap) {
-				ForEach(0..<(unit.count * 2), id: \.self) { index in
-					tile(unit[index % unit.count])
-						.frame(width: _size, height: _size)
-				}
+		let period = CGFloat(unit.count) * (_size + _gap)
+		let duration = Double(period) / _speed
+		let from: CGFloat = reverse ? -period : 0
+		let to: CGFloat = reverse ? 0 : -period
+		let animation: Animation? = _go ? Animation.linear(duration: duration).repeatForever(autoreverses: false) : nil
+		HStack(spacing: _gap) {
+			ForEach(0..<(unit.count * 2), id: \.self) { position in
+				tile(unit[position % unit.count])
+					.frame(width: _size, height: _size)
 			}
-			.offset(x: x)
-			.frame(maxWidth: .infinity, alignment: .leading)
 		}
+		.offset(x: _go ? to : from)
+		.animation(animation, value: _go)
+		.frame(maxWidth: .infinity, alignment: .leading)
 		.frame(height: _size)
 		.clipped()
+		.onAppear { _go = true }
+		.onDisappear { _go = false }
 	}
 }
 
@@ -520,6 +555,7 @@ struct HomeMarqueeSection: View {
 	}
 
 	var body: some View {
+		let lookup = HomeLayoutIndex(repo)
 		VStack(alignment: .leading, spacing: 12) {
 			if let title = block.title, !title.isEmpty {
 				Text(title)
@@ -529,7 +565,7 @@ struct HomeMarqueeSection: View {
 			VStack(spacing: 14) {
 				ForEach(Array(_rows.enumerated()), id: \.offset) { index, row in
 					MarqueeRow(items: row, reverse: index % 2 == 1) { app in
-						_tile(app)
+						_tile(app, lookup: lookup)
 					}
 				}
 			}
@@ -538,7 +574,7 @@ struct HomeMarqueeSection: View {
 	}
 
 	@ViewBuilder
-	private func _tile(_ app: HomeLayoutApp) -> some View {
+	private func _tile(_ app: HomeLayoutApp, lookup: HomeLayoutIndex) -> some View {
 		let icon = Group {
 			if let raw = app.icon, let url = URL(string: raw) {
 				LazyImage(url: url) { state in
@@ -552,7 +588,7 @@ struct HomeMarqueeSection: View {
 				Image("App_Unknown").appIconStyle(size: 66)
 			}
 		}
-		if let resolved = HomeLayoutMatcher.resolve(app, in: repo) {
+		if let resolved = lookup.resolve(app) {
 			NavigationLink {
 				SourceAppsDetailView(sourceURL: sourceURL, source: repo, app: resolved)
 			} label: {
@@ -572,7 +608,8 @@ struct HomeFeaturedSection: View {
 	let sourceURL: URL?
 
 	private var _items: [ASRepository.App] {
-		(block.apps ?? []).compactMap { HomeLayoutMatcher.resolve($0, in: repo) }
+		let index = HomeLayoutIndex(repo)
+		return (block.apps ?? []).compactMap { index.resolve($0) }
 	}
 
 	var body: some View {
@@ -640,7 +677,8 @@ struct HomeAppsRowSection: View {
 	let sourceURL: URL?
 
 	private var _apps: [ASRepository.App] {
-		(block.apps ?? []).compactMap { HomeLayoutMatcher.resolve($0, in: repo) }
+		let index = HomeLayoutIndex(repo)
+		return (block.apps ?? []).compactMap { index.resolve($0) }
 	}
 
 	var body: some View {
@@ -687,6 +725,73 @@ struct HomeAppsRowSection: View {
 				.font(AppFont.footnote.weight(.medium))
 				.lineLimit(1)
 				.frame(width: 90, alignment: .leading)
+		}
+	}
+}
+
+// MARK: - Lists (App Store style columns of three apps)
+struct HomeListsSection: View {
+	let block: HomeLayoutBlock
+	let repo: ASRepository
+	let sourceURL: URL?
+
+	private var _apps: [ASRepository.App] {
+		let index = HomeLayoutIndex(repo)
+		return (block.apps ?? []).compactMap { index.resolve($0) }
+	}
+
+	var body: some View {
+		let apps = _apps
+		if !apps.isEmpty {
+			let columns: [[ASRepository.App]] = stride(from: 0, to: apps.count, by: 3).map { start in
+				Array(apps[start..<min(start + 3, apps.count)])
+			}
+			VStack(alignment: .leading, spacing: 12) {
+				if let title = block.title, !title.isEmpty {
+					Text(title)
+						.font(AppFont.title3.bold())
+						.padding(.horizontal)
+				}
+				ScrollView(.horizontal, showsIndicators: false) {
+					LazyHStack(alignment: .top, spacing: 16) {
+						ForEach(Array(columns.enumerated()), id: \.offset) { _, column in
+							VStack(spacing: 14) {
+								ForEach(column, id: \.currentUniqueId) { app in
+									NavigationLink {
+										SourceAppsDetailView(sourceURL: sourceURL, source: repo, app: app)
+									} label: {
+										_row(app)
+									}
+									.buttonStyle(.plain)
+								}
+							}
+							.frame(width: 300)
+						}
+					}
+					.padding(.horizontal)
+				}
+			}
+		}
+	}
+
+	@ViewBuilder
+	private func _row(_ app: ASRepository.App) -> some View {
+		HStack(spacing: 12) {
+			if let iconURL = app.iconURL {
+				LazyImage(url: iconURL) { state in
+					if let image = state.image {
+						image.appIconStyle(size: 56)
+					} else {
+						Image("App_Unknown").appIconStyle(size: 56)
+					}
+				}
+			} else {
+				Image("App_Unknown").appIconStyle(size: 56)
+			}
+			Text(app.currentName)
+				.font(AppFont.subheadline.weight(.semibold))
+				.lineLimit(1)
+			Spacer(minLength: 0)
 		}
 	}
 }

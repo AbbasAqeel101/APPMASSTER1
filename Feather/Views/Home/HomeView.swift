@@ -114,8 +114,10 @@ struct HomeView: View {
 			.toolbar {
 				AvatarToolbarItem(placement: .topBarLeading) {
 					Text(.localized("Today"))
-						.font(.system(size: 34, weight: .bold))
+						.font(.system(size: 30, weight: .bold))
 						.foregroundStyle(.primary)
+						.lineLimit(1)
+						.fixedSize(horizontal: true, vertical: false)
 				}
 				AvatarToolbarItem(placement: .topBarTrailing) {
 					Button {
@@ -158,6 +160,8 @@ struct HomeView: View {
 			HomeFeaturedSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
 		case "apps":
 			HomeAppsRowSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
+		case "lists":
+			HomeListsSection(block: block, repo: repo, sourceURL: _companySource?.sourceURL)
 		default:
 			EmptyView()
 		}
