@@ -359,12 +359,20 @@ private struct HomeSlideCard: View {
 
 	/// soft graduated haze behind the text
 	private var _fog: some View {
-		LinearGradient(
-			colors: [.clear, Color.black.opacity(0.45), Color.black.opacity(0.85)],
-			startPoint: .top,
-			endPoint: .bottom
-		)
-		.frame(height: 190)
+		ZStack {
+			Rectangle()
+				.fill(.ultraThinMaterial)
+				.mask(
+					LinearGradient(colors: [.clear, .black, .black], startPoint: .top, endPoint: .bottom)
+				)
+			LinearGradient(
+				colors: [.clear, Color.black.opacity(0.45), Color.black.opacity(0.85)],
+				startPoint: .top,
+				endPoint: .bottom
+			)
+		}
+		.frame(height: 250)
+		.environment(\.colorScheme, .dark)
 		.allowsHitTesting(false)
 	}
 
@@ -438,7 +446,7 @@ private struct HomeSlideDownloadButton: View {
 						.foregroundStyle(.white)
 				}
 				.frame(width: 46, height: 46)
-				.background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+				.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
 				.onTapGesture {
 					if _progress <= 0.75 {
 						downloadManager.cancelDownload(current)
@@ -454,7 +462,7 @@ private struct HomeSlideDownloadButton: View {
 						.lineLimit(1)
 						.padding(.horizontal, 20)
 						.padding(.vertical, 9)
-						.background(Color.white.opacity(0.22), in: Capsule())
+						.background(.ultraThinMaterial, in: Capsule())
 				}
 				.buttonStyle(.plain)
 			}
@@ -499,8 +507,6 @@ private struct MarqueeRow<Tile: View>: View {
 	let reverse: Bool
 	let tile: (HomeLayoutApp) -> Tile
 
-	@State private var _go = false
-
 	private let _size: CGFloat = 66
 	private let _gap: CGFloat = 14
 	private let _speed: Double = 26
@@ -515,28 +521,25 @@ private struct MarqueeRow<Tile: View>: View {
 	var body: some View {
 		let unit = _unit
 		let period = CGFloat(unit.count) * (_size + _gap)
-		let duration = Double(period) / _speed
-		let from: CGFloat = reverse ? -period : 0
-		let to: CGFloat = reverse ? 0 : -period
-		let animation: Animation? = _go ? Animation.linear(duration: duration).repeatForever(autoreverses: false) : nil
-		// the moving strip lives in an overlay so its (very wide) content never
-		// widens the Home page — only the clear box below takes part in the layout
+		let strip = HStack(spacing: _gap) {
+			ForEach(0..<(unit.count * 2), id: \.self) { position in
+				tile(unit[position % unit.count])
+					.frame(width: _size, height: _size)
+			}
+		}
+		.fixedSize()
+		// the strip lives in an overlay so its (very wide) content never widens the Home page;
+		// its position comes from the clock, so it never stops, restarts or jumps
 		Color.clear
 			.frame(height: _size)
 			.overlay(alignment: .leading) {
-				HStack(spacing: _gap) {
-					ForEach(0..<(unit.count * 2), id: \.self) { position in
-						tile(unit[position % unit.count])
-							.frame(width: _size, height: _size)
-					}
+				TimelineView(.animation) { context in
+					let t = context.date.timeIntervalSinceReferenceDate * _speed
+					let shift = CGFloat(t.truncatingRemainder(dividingBy: Double(max(period, 1))))
+					strip.offset(x: reverse ? -period + shift : -shift)
 				}
-				.fixedSize()
-				.offset(x: _go ? to : from)
-				.animation(animation, value: _go)
 			}
 			.clipped()
-		.onAppear { _go = true }
-		.onDisappear { _go = false }
 	}
 }
 
@@ -734,7 +737,7 @@ struct HomeAppsRowSection: View {
 	}
 }
 
-// MARK: - Lists (App Store style columns of three apps)
+// MARK: - Lists (App Store style cards: dark card, apps with a short line and an Install pill)
 struct HomeListsSection: View {
 	let block: HomeLayoutBlock
 	let repo: ASRepository
@@ -748,55 +751,74 @@ struct HomeListsSection: View {
 	var body: some View {
 		let apps = _apps
 		if !apps.isEmpty {
-			let columns: [[ASRepository.App]] = stride(from: 0, to: apps.count, by: 3).map { start in
-				Array(apps[start..<min(start + 3, apps.count)])
+			let columns: [[ASRepository.App]] = stride(from: 0, to: apps.count, by: 4).map { start in
+				Array(apps[start..<min(start + 4, apps.count)])
 			}
-			VStack(alignment: .leading, spacing: 12) {
-				if let title = block.title, !title.isEmpty {
-					Text(title)
-						.font(AppFont.title3.bold())
-						.padding(.horizontal)
-				}
-				ScrollView(.horizontal, showsIndicators: false) {
-					LazyHStack(alignment: .top, spacing: 16) {
-						ForEach(Array(columns.enumerated()), id: \.offset) { _, column in
-							VStack(spacing: 14) {
-								ForEach(column, id: \.currentUniqueId) { app in
-									NavigationLink {
-										SourceAppsDetailView(sourceURL: sourceURL, source: repo, app: app)
-									} label: {
-										_row(app)
-									}
-									.buttonStyle(.plain)
-								}
-							}
-							.frame(width: 300)
-						}
+			let cardWidth = UIScreen.main.bounds.width - 48
+			ScrollView(.horizontal, showsIndicators: false) {
+				LazyHStack(alignment: .top, spacing: 14) {
+					ForEach(Array(columns.enumerated()), id: \.offset) { _, column in
+						_card(column, width: cardWidth)
 					}
-					.padding(.horizontal)
 				}
+				.padding(.horizontal)
 			}
 		}
 	}
 
 	@ViewBuilder
-	private func _row(_ app: ASRepository.App) -> some View {
-		HStack(spacing: 12) {
-			if let iconURL = app.iconURL {
-				LazyImage(url: iconURL) { state in
-					if let image = state.image {
-						image.appIconStyle(size: 56)
-					} else {
-						Image("App_Unknown").appIconStyle(size: 56)
-					}
-				}
-			} else {
-				Image("App_Unknown").appIconStyle(size: 56)
+	private func _card(_ column: [ASRepository.App], width: CGFloat) -> some View {
+		VStack(alignment: .leading, spacing: 16) {
+			if let title = block.title, !title.isEmpty {
+				Text(title)
+					.font(AppFont.title3.bold())
+					.lineLimit(2)
 			}
-			Text(app.currentName)
-				.font(AppFont.subheadline.weight(.semibold))
-				.lineLimit(1)
-			Spacer(minLength: 0)
+			ForEach(column, id: \.currentUniqueId) { app in
+				HStack(spacing: 12) {
+					NavigationLink {
+						SourceAppsDetailView(sourceURL: sourceURL, source: repo, app: app)
+					} label: {
+						HStack(spacing: 12) {
+							_icon(app)
+							VStack(alignment: .leading, spacing: 3) {
+								Text(app.currentName)
+									.font(AppFont.subheadline.weight(.semibold))
+									.lineLimit(1)
+								if let line = app.currentDescription, !line.isEmpty {
+									Text(line)
+										.font(AppFont.footnote)
+										.foregroundStyle(.secondary)
+										.lineLimit(1)
+								}
+							}
+							Spacer(minLength: 0)
+						}
+					}
+					.buttonStyle(.plain)
+
+					DownloadButtonView(sourceURL: sourceURL, source: repo, app: app, compact: true)
+				}
+			}
+		}
+		.padding(18)
+		.frame(width: width, alignment: .leading)
+		.background(AppTheme.row)
+		.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+	}
+
+	@ViewBuilder
+	private func _icon(_ app: ASRepository.App) -> some View {
+		if let iconURL = app.iconURL {
+			LazyImage(url: iconURL) { state in
+				if let image = state.image {
+					image.appIconStyle(size: 56)
+				} else {
+					Image("App_Unknown").appIconStyle(size: 56)
+				}
+			}
+		} else {
+			Image("App_Unknown").appIconStyle(size: 56)
 		}
 	}
 }
