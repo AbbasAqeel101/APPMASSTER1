@@ -15,6 +15,7 @@ import SwiftUI
 import CoreData
 import AltSourceKit
 import NimbleViews
+import NukeUI
 
 // MARK: - Entry
 struct CatalogEntry: Identifiable {
@@ -120,31 +121,60 @@ struct CatalogRowView: View {
 				app: entry.app
 			)
 		} label: {
-			HStack(spacing: 2) {
-				FRIconCellView(
-					title: entry.app.currentName,
-					subtitle: _subtitle,
-					iconUrl: entry.app.iconURL
-				)
+			HStack(spacing: 12) {
+				_icon
+				VStack(alignment: .leading, spacing: 3) {
+					Text(entry.app.currentName)
+						.font(AppFont.headline)
+						.foregroundStyle(.primary)
+						.lineLimit(1)
+					Text(_subtitle)
+						.font(AppFont.subheadline)
+						.foregroundStyle(.secondary)
+						.lineLimit(1)
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
 				DownloadButtonView(
 					sourceURL: entry.sourceURL,
 					source: entry.repository,
 					app: entry.app,
-					compact: true
+					compact: true,
+					large: true
 				)
 			}
 		}
 	}
 
+	@ViewBuilder
+	private var _icon: some View {
+		if let url = entry.app.iconURL {
+			LazyImage(url: url) { state in
+				if let image = state.image {
+					image.appIconStyle(size: 58)
+				} else {
+					Image("App_Unknown").appIconStyle(size: 58)
+				}
+			}
+		} else {
+			Image("App_Unknown").appIconStyle(size: 58)
+		}
+	}
+
+	/// A short line of the app's own description, with the version beside it.
 	private var _subtitle: String {
-		var parts: [String] = []
+		let raw = entry.app.localizedDescription ?? entry.app.description ?? entry.app.currentDescription ?? ""
+		let description = raw
+			.components(separatedBy: .newlines)
+			.joined(separator: " ")
+			.trimmingCharacters(in: .whitespacesAndNewlines)
+		var text = ""
 		if let version = entry.app.currentVersion, !version.isEmpty {
-			parts.append(version)
+			text = isolatedLTR(version)
 		}
-		if !entry.category.isEmpty {
-			parts.append(entry.category)
+		if !description.isEmpty {
+			text += (text.isEmpty ? "" : "  ") + description
 		}
-		return parts.joined(separator: "  ")
+		return text
 	}
 }
 

@@ -2,8 +2,8 @@
 //  AppTheme.swift
 //  AppMaster
 //
-//  App-wide look: the platform font ("The Year of Handicrafts", عام الحرف اليدوية)
-//  and the solid black backgrounds.
+//  App-wide look: system font (SF Pro) with IBM Plex Sans Arabic as the Arabic
+//  cascade fallback, and the solid black backgrounds.
 //
 //  The font files (.ttf / .otf) are picked up automatically from anywhere inside
 //  the app bundle (put them in Feather/Resources/Fonts). Until they are added the
@@ -15,7 +15,11 @@ import UIKit
 import CoreText
 
 // MARK: - Font
+/// The system font (SF Pro) is the base font of the whole app, so Latin letters and digits
+/// (versions, sizes, English names) always look right. The Arabic font is only a
+/// cascade fallback: it draws Arabic letters and nothing else.
 public enum AppFont {
+	/// PostScript names of the Arabic fallback font (IBM Plex Sans Arabic when shipped).
 	nonisolated(unsafe) public private(set) static var regularName: String?
 	nonisolated(unsafe) public private(set) static var heavyName: String?
 	nonisolated(unsafe) private static var _registered = false
@@ -58,45 +62,52 @@ public enum AppFont {
 			return value.contains("black") || value.contains("heavy") || value.contains("bold")
 		}
 
-		heavyName = names.first(where: { isHeavy($0) })
-		regularName = names.first(where: { !isHeavy($0) }) ?? names.first
+		// IBM Plex Sans Arabic is the Arabic font; any other shipped font is only a fallback
+		let plex = names.filter { $0.hasPrefix("IBMPlexSansArabic") }
+		let pool = plex.isEmpty ? names : plex
+		heavyName = pool.first(where: { isHeavy($0) })
+		regularName = pool.first(where: { !isHeavy($0) }) ?? pool.first
 		if heavyName == nil { heavyName = regularName }
 	}
 
 	public static var isAvailable: Bool { regularName != nil }
 
-	private static func _make(_ style: Font.TextStyle, _ size: CGFloat, heavy: Bool) -> Font {
-		register()
-		if let name = heavy ? heavyName : regularName {
-			return Font.custom(name, size: size, relativeTo: style)
-		}
-		return Font.system(style)
+	/// System font as the base, Arabic font as a cascade list (Arabic letters only).
+	public static func mixedFont(arabic: String?, size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
+		let base = UIFont.systemFont(ofSize: size, weight: weight)
+		guard let arabic else { return base }
+		let descriptor = base.fontDescriptor.addingAttributes([
+			.cascadeList: [UIFontDescriptor(fontAttributes: [.name: arabic])]
+		])
+		return UIFont(descriptor: descriptor, size: size)
 	}
 
-	public static var largeTitle: Font { _make(.largeTitle, 34, heavy: true) }
-	public static var title: Font { _make(.title, 28, heavy: true) }
-	public static var title2: Font { _make(.title2, 22, heavy: true) }
-	public static var title3: Font { _make(.title3, 20, heavy: true) }
-	public static var headline: Font { _make(.headline, 17, heavy: true) }
-	public static var body: Font { _make(.body, 17, heavy: false) }
-	public static var callout: Font { _make(.callout, 16, heavy: false) }
-	public static var subheadline: Font { _make(.subheadline, 15, heavy: false) }
-	public static var footnote: Font { _make(.footnote, 13, heavy: false) }
-	public static var caption: Font { _make(.caption, 12, heavy: false) }
-	public static var caption2: Font { _make(.caption2, 11, heavy: false) }
+	private static func _make(_ size: CGFloat, heavy: Bool) -> Font {
+		register()
+		let arabic = heavy ? heavyName : regularName
+		let uiFont = mixedFont(arabic: arabic, size: size, weight: heavy ? .bold : .regular)
+		return Font(uiFont as CTFont)
+	}
+
+	public static var largeTitle: Font { _make(34, heavy: true) }
+	public static var title: Font { _make(28, heavy: true) }
+	public static var title2: Font { _make(22, heavy: true) }
+	public static var title3: Font { _make(20, heavy: true) }
+	public static var headline: Font { _make(17, heavy: true) }
+	public static var body: Font { _make(17, heavy: false) }
+	public static var callout: Font { _make(16, heavy: false) }
+	public static var subheadline: Font { _make(15, heavy: false) }
+	public static var footnote: Font { _make(13, heavy: false) }
+	public static var caption: Font { _make(12, heavy: false) }
+	public static var caption2: Font { _make(11, heavy: false) }
 
 	/// Titles of navigation bars and the tab bar (UIKit parts of the interface).
 	@MainActor
 	public static func applyUIKitAppearance() {
-		guard
-			let heavy = heavyName,
-			let regular = regularName,
-			let titleFont = UIFont(name: heavy, size: 17),
-			let largeTitleFont = UIFont(name: heavy, size: 32),
-			let tabFont = UIFont(name: regular, size: 10)
-		else {
-			return
-		}
+		register()
+		let titleFont = mixedFont(arabic: heavyName, size: 17, weight: .bold)
+		let largeTitleFont = mixedFont(arabic: heavyName, size: 32, weight: .bold)
+		let tabFont = mixedFont(arabic: regularName, size: 10, weight: .medium)
 
 		UINavigationBar.appearance().titleTextAttributes = [.font: titleFont]
 		UINavigationBar.appearance().largeTitleTextAttributes = [.font: largeTitleFont]
@@ -104,6 +115,9 @@ public enum AppFont {
 		UITabBarItem.appearance().setTitleTextAttributes([.font: tabFont], for: .selected)
 	}
 }
+
+/// Version numbers inside Arabic text keep their left-to-right order.
+public func isolatedLTR(_ text: String) -> String { "\u{2066}" + text + "\u{2069}" }
 
 // MARK: - Colors
 public enum AppTheme {

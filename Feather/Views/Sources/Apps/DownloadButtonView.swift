@@ -16,6 +16,8 @@ struct DownloadButtonView: View {
 	let app: ASRepository.App
 	/// Smaller pills for list rows.
 	var compact: Bool = false
+	/// Same size as the Install button on the Home cards.
+	var large: Bool = false
 	@ObservedObject private var downloadManager = DownloadManager.shared
 
 	@State private var downloadProgress: Double = 0
@@ -114,10 +116,10 @@ struct DownloadButtonView: View {
 		Text(title)
 			.lineLimit(1)
 			.minimumScaleFactor(0.8)
-			.font(AppFont.footnote.bold())
+			.font(large ? AppFont.subheadline.weight(.bold) : AppFont.footnote.bold())
 			.foregroundStyle(Color.accentColor)
-			.padding(.horizontal, compact ? 10 : 14)
-			.padding(.vertical, compact ? 3 : 5)
+			.padding(.horizontal, large ? 20 : (compact ? 10 : 14))
+			.padding(.vertical, large ? 9 : (compact ? 3 : 5))
 			.background(AppTheme.pill.opacity(prominent ? 1 : 0.7))
 			.clipShape(Capsule())
 	}

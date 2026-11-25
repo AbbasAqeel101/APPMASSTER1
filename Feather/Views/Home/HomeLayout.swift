@@ -578,6 +578,10 @@ struct HomeMarqueeSection: View {
 				}
 			}
 			.environment(\.layoutDirection, .leftToRight)
+			.padding(.vertical, 16)
+			.background(AppTheme.row)
+			.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+			.padding(.horizontal)
 		}
 	}
 

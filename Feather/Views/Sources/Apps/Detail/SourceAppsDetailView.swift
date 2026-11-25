@@ -49,21 +49,19 @@ struct SourceAppsDetailView: View {
 						standardIcon
 					}
 
-					VStack(alignment: .leading, spacing: 5) {
-						Text(app.currentName)
-							.font(AppFont.title3)
-							.foregroundColor(.primary)
-							.lineLimit(2)
-							.frame(maxWidth: .infinity, alignment: .leading)
+					Spacer(minLength: 0)
 
-						// latest version, right under the name
-						_versionLine()
-
-						DownloadButtonView(sourceURL: sourceURL, source: source, app: app)
-							.padding(.top, 2)
-					}
-					.frame(maxWidth: .infinity, alignment: .leading)
+					DownloadButtonView(sourceURL: sourceURL, source: source, app: app, large: true)
 				}
+
+				// name under the icon, then the version line
+				Text(app.currentName)
+					.font(AppFont.title2)
+					.foregroundColor(.primary)
+					.lineLimit(2)
+					.frame(maxWidth: .infinity, alignment: .leading)
+
+				_versionLine()
 
 				Divider()
 				_infoStrip()
@@ -268,13 +266,21 @@ extension SourceAppsDetailView {
 		return map[genre] ?? genre
 	}
 
+	/// Digits stay Latin 0-9 even in Arabic.
+	private static func _latinNumber(_ value: Int) -> String {
+		let formatter = NumberFormatter()
+		formatter.locale = Locale(identifier: "en_US")
+		formatter.numberStyle = .decimal
+		return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+	}
+
 	private func _infoCells() -> [InfoCellData] {
 		var cells: [InfoCellData] = []
 
 		// downloads
 		let downloads = app.downloads ?? 0
 		cells.append(InfoCellData(
-			value: NumberFormatter.localizedString(from: NSNumber(value: downloads), number: .decimal),
+			value: Self._latinNumber(downloads),
 			icon: "arrow.down.square"
 		))
 
@@ -400,7 +406,7 @@ extension SourceAppsDetailView {
 	private func _versionParts() -> [String] {
 		var parts: [String] = []
 		if let version = app.currentVersion, !version.isEmpty {
-			parts.append(String.localized("Version") + " " + version)
+			parts.append(String.localized("Version") + " " + isolatedLTR(version))
 		}
 		if let date = app.updateDate {
 			parts.append(_updateLabel(date))

@@ -58,7 +58,7 @@ struct FeatherApp: App {
 			}
 			.environment(\.locale, _locale)
 			.environment(\.layoutDirection, _layoutDirection)
-			// the platform font ("عام الحرف اليدوية") for every text without its own font
+			// default text: system font (SF Pro) with the Arabic font as cascade fallback
 			.environment(\.font, AppFont.body)
 			.background(AppTheme.background.ignoresSafeArea())
 			.animation(.smooth, value: downloadManager.manualDownloads.description)
