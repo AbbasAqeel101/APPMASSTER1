@@ -507,8 +507,8 @@ private struct MarqueeRow<Tile: View>: View {
 	let reverse: Bool
 	let tile: (HomeLayoutApp) -> Tile
 
-	private let _size: CGFloat = 66
-	private let _gap: CGFloat = 14
+	private let _size: CGFloat = 78
+	private let _gap: CGFloat = 16
 	private let _speed: Double = 26
 
 	private var _unit: [HomeLayoutApp] {
@@ -570,7 +570,7 @@ struct HomeMarqueeSection: View {
 					.font(AppFont.title2.bold())
 					.padding(.horizontal)
 			}
-			VStack(spacing: 14) {
+			VStack(spacing: 20) {
 				ForEach(Array(_rows.enumerated()), id: \.offset) { index, row in
 					MarqueeRow(items: row, reverse: index % 2 == 1) { app in
 						_tile(app, lookup: lookup)
@@ -578,7 +578,7 @@ struct HomeMarqueeSection: View {
 				}
 			}
 			.environment(\.layoutDirection, .leftToRight)
-			.padding(.vertical, 16)
+			.padding(.vertical, 28)
 			.background(AppTheme.row)
 			.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
 			.padding(.horizontal)
@@ -591,13 +591,13 @@ struct HomeMarqueeSection: View {
 			if let raw = app.icon, let url = URL(string: raw) {
 				LazyImage(url: url) { state in
 					if let image = state.image {
-						image.appIconStyle(size: 66)
+						image.appIconStyle(size: 78)
 					} else {
-						Image("App_Unknown").appIconStyle(size: 66)
+						Image("App_Unknown").appIconStyle(size: 78)
 					}
 				}
 			} else {
-				Image("App_Unknown").appIconStyle(size: 66)
+				Image("App_Unknown").appIconStyle(size: 78)
 			}
 		}
 		if let resolved = lookup.resolve(app) {

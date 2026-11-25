@@ -58,8 +58,6 @@ struct FeatherApp: App {
 			}
 			.environment(\.locale, _locale)
 			.environment(\.layoutDirection, _layoutDirection)
-			// default text: system font (SF Pro) with the Arabic font as cascade fallback
-			.environment(\.font, AppFont.body)
 			.background(AppTheme.background.ignoresSafeArea())
 			.animation(.smooth, value: downloadManager.manualDownloads.description)
 			// one-tap install: status capsule + the install sheet that opens the iOS prompt
@@ -206,8 +204,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
 	) -> Bool {
 		Bundle.applyStoredLanguageOverrideIfNeeded()
-		AppFont.register()
-		AppFont.applyUIKitAppearance()
+		VPNGuard.shared.start()
 		_createPipeline()
 		_createDocumentsDirectories()
 		ResetView.clearWorkCache()
