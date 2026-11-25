@@ -519,17 +519,22 @@ private struct MarqueeRow<Tile: View>: View {
 		let from: CGFloat = reverse ? -period : 0
 		let to: CGFloat = reverse ? 0 : -period
 		let animation: Animation? = _go ? Animation.linear(duration: duration).repeatForever(autoreverses: false) : nil
-		HStack(spacing: _gap) {
-			ForEach(0..<(unit.count * 2), id: \.self) { position in
-				tile(unit[position % unit.count])
-					.frame(width: _size, height: _size)
+		// the moving strip lives in an overlay so its (very wide) content never
+		// widens the Home page — only the clear box below takes part in the layout
+		Color.clear
+			.frame(height: _size)
+			.overlay(alignment: .leading) {
+				HStack(spacing: _gap) {
+					ForEach(0..<(unit.count * 2), id: \.self) { position in
+						tile(unit[position % unit.count])
+							.frame(width: _size, height: _size)
+					}
+				}
+				.fixedSize()
+				.offset(x: _go ? to : from)
+				.animation(animation, value: _go)
 			}
-		}
-		.offset(x: _go ? to : from)
-		.animation(animation, value: _go)
-		.frame(maxWidth: .infinity, alignment: .leading)
-		.frame(height: _size)
-		.clipped()
+			.clipped()
 		.onAppear { _go = true }
 		.onDisappear { _go = false }
 	}
