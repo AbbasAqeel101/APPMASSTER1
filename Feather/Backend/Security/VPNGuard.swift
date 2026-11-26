@@ -10,6 +10,7 @@
 import SwiftUI
 import UIKit
 import CFNetwork
+import NimbleViews
 
 @MainActor
 final class VPNGuard {
