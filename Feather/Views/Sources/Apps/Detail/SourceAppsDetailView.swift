@@ -395,7 +395,13 @@ extension SourceAppsDetailView {
 	private func _versionLine() -> some View {
 		let parts = _versionParts()
 		if !parts.isEmpty {
-			Text(parts.joined(separator: "   "))
+			let isNew = app.isNewUpdate
+			let text: Text = {
+				guard isNew, parts.count > 1 else { return Text(parts.joined(separator: "   ")) }
+				return Text(parts.dropLast().joined(separator: "   ") + "   ")
+					+ Text(parts.last ?? "").foregroundColor(.green).bold()
+			}()
+			text
 				.font(AppFont.footnote)
 				.foregroundStyle(.secondary)
 				.lineLimit(1)

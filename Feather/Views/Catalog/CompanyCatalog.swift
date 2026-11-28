@@ -109,6 +109,31 @@ enum CompanyCatalog {
 	}
 }
 
+// MARK: - New update
+extension ASRepository.App {
+	/// Updated within the last 7 days.
+	var isNewUpdate: Bool {
+		guard let date = updateDate else { return false }
+		let days = Calendar.current.dateComponents([.day], from: date, to: Date()).day ?? 0
+		return days < 7
+	}
+}
+
+/// Green "New update" pill, shown beside the name for a week after an update.
+struct NewUpdateBadge: View {
+	var body: some View {
+		Text(.localized("New Update"))
+			.font(AppFont.caption2.weight(.bold))
+			.foregroundStyle(Color.green)
+			.lineLimit(1)
+			.fixedSize()
+			.padding(.horizontal, 7)
+			.padding(.vertical, 2)
+			.background(Color.green.opacity(0.18))
+			.clipShape(Capsule())
+	}
+}
+
 // MARK: - Row
 struct CatalogRowView: View {
 	let entry: CatalogEntry
@@ -124,13 +149,16 @@ struct CatalogRowView: View {
 			HStack(spacing: 12) {
 				_icon
 				VStack(alignment: .leading, spacing: 3) {
-					Text(entry.app.currentName)
-						.font(AppFont.headline)
-						.foregroundStyle(.primary)
-						.lineLimit(1)
+					HStack(spacing: 6) {
+						Text(entry.app.currentName)
+							.font(AppFont.headline)
+							.foregroundStyle(Color(uiColor: .label))
+							.lineLimit(1)
+						if entry.app.isNewUpdate { NewUpdateBadge() }
+					}
 					Text(_subtitle)
 						.font(AppFont.subheadline)
-						.foregroundStyle(.secondary)
+						.foregroundStyle(Color(uiColor: .secondaryLabel))
 						.lineLimit(1)
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)

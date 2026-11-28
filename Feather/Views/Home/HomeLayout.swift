@@ -786,9 +786,12 @@ struct HomeListsSection: View {
 						HStack(spacing: 12) {
 							_icon(app)
 							VStack(alignment: .leading, spacing: 3) {
-								Text(app.currentName)
-									.font(AppFont.subheadline.weight(.semibold))
-									.lineLimit(1)
+								HStack(spacing: 6) {
+									Text(app.currentName)
+										.font(AppFont.subheadline.weight(.semibold))
+										.lineLimit(1)
+									if app.isNewUpdate { NewUpdateBadge() }
+								}
 								if let line = app.currentDescription, !line.isEmpty {
 									Text(line)
 										.font(AppFont.footnote)
@@ -801,7 +804,7 @@ struct HomeListsSection: View {
 					}
 					.buttonStyle(.plain)
 
-					DownloadButtonView(sourceURL: sourceURL, source: repo, app: app, compact: true)
+					DownloadButtonView(sourceURL: sourceURL, source: repo, app: app, compact: true, large: true)
 				}
 			}
 		}

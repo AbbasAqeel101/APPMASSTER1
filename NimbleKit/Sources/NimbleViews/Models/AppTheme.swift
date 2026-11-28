@@ -54,6 +54,33 @@ public enum AppTheme {
 	}
 }
 
+// MARK: - Settings row
+/// Row title with its icon in a dark-gray rounded square (taller row, gray icons).
+public struct AppRowLabel: View {
+	private let _title: String
+	private let _systemImage: String
+
+	public init(_ title: String, systemImage: String) {
+		self._title = title
+		self._systemImage = systemImage
+	}
+
+	public var body: some View {
+		HStack(spacing: 12) {
+			Image(systemName: _systemImage)
+				.font(.system(size: 16, weight: .regular))
+				.foregroundStyle(Color(uiColor: .secondaryLabel))
+				.frame(width: 34, height: 34)
+				.background(
+					RoundedRectangle(cornerRadius: 9, style: .continuous).fill(AppTheme.pill)
+				)
+			Text(verbatim: _title)
+				.foregroundStyle(Color(uiColor: .label))
+		}
+		.padding(.vertical, 7)
+	}
+}
+
 // MARK: - Modifiers
 public extension View {
 	/// Every row is its own dark-gray rounded card (small gap between cards, no separators).

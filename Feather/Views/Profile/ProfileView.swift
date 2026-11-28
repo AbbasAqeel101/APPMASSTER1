@@ -162,28 +162,29 @@ extension ProfileView {
 	private func _general() -> some View {
 		Section {
 			NavigationLink(destination: EditProfileView()) {
-				Label(.localized("Profile"), systemImage: "person.crop.circle")
+				AppRowLabel(.localized("Profile"), systemImage: "person.crop.circle")
 			}
 			NavigationLink(destination: CertificatesView()) {
-				Label(.localized("Certificates"), systemImage: "checkmark.seal")
+				AppRowLabel(.localized("Certificates"), systemImage: "checkmark.seal")
 			}
 			NavigationLink(destination: AppearanceView()) {
-				Label(.localized("Appearance"), systemImage: "paintbrush")
+				AppRowLabel(.localized("Appearance"), systemImage: "paintbrush")
 			}
 			NavigationLink(destination: NotificationsView(mode: .settings)) {
-				Label(.localized("Notifications"), systemImage: "bell.badge")
+				AppRowLabel(.localized("Notifications"), systemImage: "bell.badge")
 			}
 			NavigationLink(destination: FavoritesView()) {
-				Label(.localized("Favorites"), systemImage: "star")
+				AppRowLabel(.localized("Favorites"), systemImage: "star")
 			}
 			NavigationLink(destination: AboutView()) {
-				Label {
-					Text(verbatim: .localized("About %@", arguments: Bundle.main.name))
-				} icon: {
+				HStack(spacing: 12) {
 					Image("AppMasterGlyph")
 						.renderingMode(.original)
-						.appIconStyle(size: 30)
+						.appIconStyle(size: 34)
+					Text(verbatim: .localized("About %@", arguments: Bundle.main.name))
+						.foregroundStyle(Color(uiColor: .label))
 				}
+				.padding(.vertical, 7)
 			}
 		}
 		.appRowBackground()
@@ -193,25 +194,25 @@ extension ProfileView {
 	private func _features() -> some View {
 		NBSection(.localized("Features")) {
 			NavigationLink(destination: CustomizeInterfaceView()) {
-				Label(.localized("Customize Interface"), systemImage: "slider.horizontal.3")
+				AppRowLabel(.localized("Customize Interface"), systemImage: "slider.horizontal.3")
 			}
 			NavigationLink(destination: ConfigurationView()) {
-				Label(.localized("Signing Options"), systemImage: "signature")
+				AppRowLabel(.localized("Signing Options"), systemImage: "signature")
 			}
 			NavigationLink(destination: ArchiveView()) {
-				Label(.localized("Archive & Compression"), systemImage: "archivebox")
+				AppRowLabel(.localized("Archive & Compression"), systemImage: "archivebox")
 			}
 			NavigationLink(destination: InstallationView()) {
-				Label(.localized("Installation"), systemImage: "arrow.down.circle")
+				AppRowLabel(.localized("Installation"), systemImage: "arrow.down.circle")
 			}
 			NavigationLink(destination: StorageView()) {
-				Label(.localized("Storage"), systemImage: "internaldrive")
+				AppRowLabel(.localized("Storage"), systemImage: "internaldrive")
 			}
 			NavigationLink(destination: BackupRestoreView()) {
-				Label(.localized("Backup & Restore"), systemImage: "arrow.triangle.2.circlepath")
+				AppRowLabel(.localized("Backup & Restore"), systemImage: "arrow.triangle.2.circlepath")
 			}
 			NavigationLink(destination: ResetView()) {
-				Label(.localized("Reset"), systemImage: "trash")
+				AppRowLabel(.localized("Reset"), systemImage: "trash")
 			}
 		}
 	}
@@ -220,12 +221,12 @@ extension ProfileView {
 	private func _preferences() -> some View {
 		Section {
 			NavigationLink(destination: LanguageView()) {
-				Label(.localized("Language"), systemImage: "globe")
+				AppRowLabel(.localized("Language"), systemImage: "globe")
 			}
 			Button {
 				UIApplication.open(AppMasterConfig.supportURL)
 			} label: {
-				Label(.localized("Help & Support"), systemImage: "questionmark.bubble")
+				AppRowLabel(.localized("Help & Support"), systemImage: "questionmark.bubble")
 			}
 		}
 		.appRowBackground()

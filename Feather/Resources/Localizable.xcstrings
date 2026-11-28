@@ -1,6 +1,17 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "New Update": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحديث جديد"
+          }
+        }
+      }
+    },
     "%@ available on device": {
       "extractionState": "manual",
       "localizations": {
