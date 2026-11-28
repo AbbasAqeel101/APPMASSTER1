@@ -39,8 +39,8 @@ struct CustomizeBeforeInstallView: View {
 	}
 
 	private func _selectedCertificate() -> CertificatePair? {
-		guard _certificates.indices.contains(_certificateIndex) else { return nil }
-		return _certificates[_certificateIndex]
+		if _certificates.indices.contains(_certificateIndex) { return _certificates[_certificateIndex] }
+		return _certificates.first
 	}
 
 	// MARK: Body

@@ -176,16 +176,6 @@ extension ProfileView {
 			NavigationLink(destination: FavoritesView()) {
 				AppRowLabel(.localized("Favorites"), systemImage: "star")
 			}
-			NavigationLink(destination: AboutView()) {
-				HStack(spacing: 12) {
-					Image("AppMasterGlyph")
-						.renderingMode(.original)
-						.appIconStyle(size: 34)
-					Text(verbatim: .localized("About %@", arguments: Bundle.main.name))
-						.foregroundStyle(Color(uiColor: .label))
-				}
-				.padding(.vertical, 7)
-			}
 		}
 		.appRowBackground()
 	}
@@ -227,6 +217,16 @@ extension ProfileView {
 				UIApplication.open(AppMasterConfig.supportURL)
 			} label: {
 				AppRowLabel(.localized("Help & Support"), systemImage: "questionmark.bubble")
+			}
+			NavigationLink(destination: AboutView()) {
+				HStack(spacing: 12) {
+					Image("AppMasterGlyph")
+						.renderingMode(.original)
+						.appIconStyle(size: 34)
+					Text(verbatim: .localized("About %@", arguments: Bundle.main.name))
+						.foregroundStyle(Color(uiColor: .label))
+				}
+				.padding(.vertical, 7)
 			}
 		}
 		.appRowBackground()

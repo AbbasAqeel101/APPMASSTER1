@@ -103,6 +103,19 @@ final class SigningHandler: NSObject {
 		// iOS "26" (19) needs special treatment
 		try await _locateMachosAndFixupArm64eSlice(for: movedAppPath)
 		
+		// The chosen identifier must really be inside the app's Info.plist before signing:
+		// stop with an error instead of silently signing / installing with another identifier.
+		if let expected = _options.appIdentifier, !expected.isEmpty {
+			let written = NSDictionary(contentsOf: movedAppPath.appendingPathComponent("Info.plist"))?["CFBundleIdentifier"] as? String
+			guard written == expected else {
+				throw NSError(
+					domain: "AppMaster.Signing",
+					code: 1,
+					userInfo: [NSLocalizedDescriptionKey: "Bundle identifier was not applied (\(written ?? "nil") instead of \(expected))"]
+				)
+			}
+		}
+		
 		let handler = ZsignHandler(appUrl: movedAppPath, options: _options, cert: appCertificate)
 		try await handler.disinject()
 		

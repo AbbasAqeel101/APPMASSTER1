@@ -149,17 +149,17 @@ struct CatalogRowView: View {
 			HStack(spacing: 12) {
 				_icon
 				VStack(alignment: .leading, spacing: 3) {
-					HStack(spacing: 6) {
-						Text(entry.app.currentName)
-							.font(AppFont.headline)
-							.foregroundStyle(Color(uiColor: .label))
-							.lineLimit(1)
-						if entry.app.isNewUpdate { NewUpdateBadge() }
-					}
-					Text(_subtitle)
-						.font(AppFont.subheadline)
-						.foregroundStyle(Color(uiColor: .secondaryLabel))
+					Text(entry.app.currentName)
+						.font(AppFont.headline)
+						.foregroundStyle(Color(uiColor: .label))
 						.lineLimit(1)
+					HStack(spacing: 6) {
+						if entry.app.isNewUpdate { NewUpdateBadge() }
+						Text(_subtitle)
+							.font(AppFont.subheadline)
+							.foregroundStyle(Color(uiColor: .secondaryLabel))
+							.lineLimit(1)
+					}
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
 				DownloadButtonView(
