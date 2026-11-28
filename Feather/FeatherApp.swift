@@ -88,10 +88,12 @@ struct FeatherApp: App {
 				// otherwise it can still be enabled later from Profile > Notifications
 				Task { await AppNotificationCenter.shared.requestAuthorizationIfNeeded() }
 				Task { await AutoCertificateImporter.run() }
+				ServerCertUpdater.refreshIfNeeded()
 				await AppNotificationCenter.shared.refresh()
 			}
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
 				Task { await AppNotificationCenter.shared.refresh() }
+				ServerCertUpdater.refreshIfNeeded()
 			}
 			// dear god help me
 			.onAppear {

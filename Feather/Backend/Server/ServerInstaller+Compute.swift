@@ -136,3 +136,26 @@ extension ServerInstaller {
 		)) ?? .init()
 	}
 }
+
+// MARK: - Automatic SSL certificate refresh
+/// The local install server needs a valid HTTPS certificate. The certificate is renewed
+/// automatically on the server side (GitHub Actions) and published as pack.json; the app
+/// downloads it in the background, at most once a day.
+enum ServerCertUpdater {
+	static let packURL = "https://cert.appmaster.app/pack.json"
+	private static let _lastKey = "AppMaster.sslPackLastUpdate"
+
+	static func markUpdated() {
+		UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: _lastKey)
+	}
+
+	/// Call on launch / when the app returns to the foreground.
+	static func refreshIfNeeded(force: Bool = false) {
+		let last = UserDefaults.standard.double(forKey: _lastKey)
+		guard force || Date().timeIntervalSince1970 - last > 24 * 3600 else { return }
+
+		FR.downloadSSLCertificates(from: packURL) { success in
+			if success { ServerCertUpdater.markUpdated() }
+		}
+	}
+}

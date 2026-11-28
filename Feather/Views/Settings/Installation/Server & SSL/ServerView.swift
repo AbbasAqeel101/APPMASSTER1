@@ -53,7 +53,7 @@ struct ServerView: View {
 	private let _serverMethods: [String] = [.localized("Fully Local"), .localized("Semi Local")]
 	
 	private let _dataService = NBFetchService()
-	private let _serverPackUrl = "https://backloop.dev/pack.json"
+	private let _serverPackUrl = ServerCertUpdater.packURL
 	
 	// MARK: Body
 	var body: some View {
@@ -73,6 +73,7 @@ struct ServerView: View {
 				Button(.localized("Update SSL Certificates"), systemImage: "arrow.down.doc") {
 					FR.downloadSSLCertificates(from: _serverPackUrl) { success in
 						if success {
+							ServerCertUpdater.markUpdated()
 							DispatchQueue.main.async {
 								UIAlertController.showAlertWithOk(
 									title: .localized("SSL Certificates"),
